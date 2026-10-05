@@ -34,13 +34,28 @@ Every time:
 
 1. Plug the printer into the Mac and switch it on.
 2. Start the booth: `cd selfie-booth && .venv/bin/python server.py`
-3. It prints an address like `http://10.0.0.194:8000`. Open that in Safari on the iPad.
-4. Safari warns the connection isn't private (the Mac made its own certificate). Tap **Show Details**,
-   then **visit this website**. Allow the camera when asked.
-5. Optional: Share, **Add to Home Screen**, and turn on Guided Access (Settings, Accessibility) to lock
-   the iPad to the booth.
+3. On the iPad (same Wi-Fi as the Mac), open **https://selfie-booth.local:8443**. Add it to the Home
+   Screen (Share, Add to Home Screen) for one-tap opening, and turn on Guided Access (Settings,
+   Accessibility) to lock the iPad to the booth.
 
-If the page won't load, check the Mac didn't pop up a "allow incoming connections" box for Python.
+The address is the same on any Wi-Fi: the server announces `selfie-booth.local` on whatever network
+it's on.
+
+### First time on an iPad: trust the booth (once)
+
+The booth uses https because Safari only allows the live camera on https. The server makes its own
+small certificate authority (kept in `certs/`, never committed). Each iPad trusts it once:
+
+1. On the iPad, open **http://selfie-booth.local:8000** and tap **Download the booth certificate**, then
+   Allow.
+2. Settings, **Profile Downloaded**, Install.
+3. Settings, General, About, **Certificate Trust Settings**, turn on **Selfie Booth**.
+
+After that the booth opens with no warning, even after the Mac changes networks. If you delete the
+`certs/` folder, a new authority is made and iPads need to do this again.
+
+If `selfie-booth.local` doesn't load, the server also prints the Mac's own `.local` name and its IP
+address to try instead. Also check the Mac didn't pop up an "allow incoming connections" box for Python.
 
 ## Using the booth
 
@@ -57,7 +72,7 @@ Guests go through:
   caption for everyone, guests skip step 3 (except on Plain, where it becomes "Doodle on it").
 - **Date** on or off, **Sound** on or off.
 
-To see every pattern and photo count at once: `https://<the same address>:8443/frames.html`.
+To see every pattern and photo count at once: https://selfie-booth.local:8443/frames.html
 
 ## Files
 
@@ -92,7 +107,9 @@ and a micro-USB power supply.
 3. Copy the folder over (without `.venv` and `certs`), then on the Pi:
    `sudo apt install -y python3-venv libusb-1.0-0 openssl`, the same venv and `requirements.txt` install,
    and `sudo .venv/bin/python server.py` (raw USB needs permission).
-4. On the iPad, open the Pi's address instead of the Mac's.
+4. On the iPad, open https://selfie-booth.local:8443 as before (the Pi announces the same name through
+   Avahi, if `avahi-utils` is installed). The Pi makes its own certificate authority, so each iPad trusts it
+   once, from http://selfie-booth.local:8000.
 
 Still to do for the Pi: a udev rule so it doesn't need `sudo`, starting on boot, and having the Pi make
 its own Wi-Fi so the booth works at venues without Wi-Fi.
