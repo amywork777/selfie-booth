@@ -4,16 +4,19 @@ A 3D-printed stand that puts the iPad mini on top of the Rollo X1038, plus two l
 a scalloped bezel with a "selfie booth" sign around the iPad, and a front plate over the printer
 with a slot where the print comes out.
 
-| Part | File | Make it |
-| --- | --- | --- |
-| Saddle (legs + deck over the printer) | `3MF/saddle_print.3mf` | Print as loaded: deck down, legs up. No supports. |
-| Cradle (holds the iPad, tilted back 15°) | `3MF/cradle_print.3mf` | Print standing on its base. No supports. |
-| Bezel and sign | `DXF/bezel.dxf` | Laser cut 3 mm sheet, 182 x 265 mm. `CUT` layer cuts, `ENGRAVE` layer engraves the lettering. |
-| Front plate | `DXF/front_plate.dxf` | Laser cut 3 mm sheet, 251 x 105 mm. Same layers. |
-| Screws | 4 x M3 x 12 self-tapping (or glue) | Up through the deck into the cradle. |
+Everything can be 3D printed. If you have a laser cutter, the two panels can be cut instead.
 
-Both prints fit a 256 mm Bambu plate. PLA, 3 walls, 15% infill is plenty. Together they are about
-236 cm³ of solid model (the slicer will use less with infill).
+| Part | 3D print | Or laser cut |
+| --- | --- | --- |
+| Saddle (legs + deck over the printer) | `3MF/saddle_print.3mf`: print as loaded, deck down. No supports. | |
+| Cradle (holds the iPad, tilted back 15°) | `3MF/cradle_print.3mf`: print standing on its base. No supports. | |
+| Bezel and sign (178 x 247 mm) | `3MF/bezel_print.3mf`: flat, lettering up. | `DXF/bezel.dxf`, 3 mm sheet |
+| Front plate (245 x 103 mm) | `3MF/front_plate_print.3mf`: flat, lettering up. | `DXF/front_plate.dxf`, 3 mm sheet |
+| Screws | 4 x M3 x 12 self-tapping, or glue | |
+
+Every part fits a 256 mm Bambu plate. PLA, 3 walls, 15% infill is plenty. The printed panels are
+3 mm thick with the lettering raised 0.8 mm: for two colours, add a filament change at the layer
+just above 3 mm in Bambu Studio. In the DXFs, the `CUT` layer cuts and `ENGRAVE` engraves.
 
 ## Putting it together
 

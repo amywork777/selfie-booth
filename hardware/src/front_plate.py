@@ -19,8 +19,8 @@ SLOT_W = 136.0
 SLOT_Z0, SLOT_Z1 = PRINTER_H - 24.0, PRINTER_H + 4.0
 
 
-@dxf(out="../DXF/front_plate.dxf")
-def front_plate():
+def front_plate_sketches():
+    """(cut, lettering): the plate outline with its holes, and the lettering."""
     # Scallops reach TOP at the top and dip below the table at the bottom; the bottom is then trimmed
     # flat at Y=0 so the plate stands on the table.
     cut = scalloped_rect(0, (TOP - BUMP) / 2, 2 * HALF_W, TOP - BUMP, BUMP)
@@ -40,6 +40,12 @@ def front_plate():
         cut -= heart(x, 18, 14 if i % 2 else 18)
 
     lettering = text("your print comes out here", 0, SLOT_Z0 - 13, 15)
+    return cut, lettering
+
+
+@dxf(out="../DXF/front_plate.dxf")
+def front_plate():
+    cut, lettering = front_plate_sketches()
     return {"CUT": cut, "ENGRAVE": lettering}
 
 
