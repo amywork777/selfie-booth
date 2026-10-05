@@ -1,0 +1,26 @@
+/* Toy: butter-yellow stage, plum outlines, candy pink accent, dot-matrix title, chunky outlined springy controls. */
+/* Load from Google Fonts when used: Doto (labels), Caveat (handwriting), Fraunces (soft serif). */
+:root {
+  --bg: #fff3b0;
+  --surface: #fff8d6;
+  --surface-2: #ffe98a;
+  --ink: #3a2a47;
+  --ink-soft: rgba(58, 42, 71, 0.72);
+  --ink-muted: rgba(58, 42, 71, 0.5);
+  --rule: #3a2a47;
+  --accent: #ff6fa3;
+  --accent-ink: #d6447e;
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Doto", "Helvetica Neue", sans-serif;
+  --font-label: "Doto", var(--font-sans);
+  --font-hand: "Caveat", "Bradley Hand", cursive;
+  --text-body: 18px;
+  --text-small: 13px;
+  --text-display: clamp(48px, 9vw, 140px);
+  --tracking-display: -0.02em;
+  --tracking-label: 0.04em;
+  --radius-control: 14px;
+  --radius-surface: 22px;
+  --space-unit: 6px;
+  --ease-out: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
