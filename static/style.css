@@ -179,7 +179,32 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 @media (max-width: 600px) {
 }
 
+/* Keypad: the code screen before each paid session, and in front of Settings. */
+.keypad[hidden] { display: none; }
+.keypad {
+  position: fixed; inset: 0; z-index: 50; background: var(--bg);
+  display: grid; place-content: center; justify-items: center; gap: 22px; padding: 24px;
+}
+.keypad .title { text-align: center; }
+.keypad-hint { margin: 0; font-weight: 700; color: var(--ink-soft); }
+.dots { display: flex; gap: 18px; }
+.dots span { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--rule); }
+.dots span.on { background: var(--ink); }
+.dots.wrong { animation: shake 360ms; }
+@keyframes shake { 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+.keys { display: grid; grid-template-columns: repeat(3, 96px); gap: 14px; }
+.key {
+  height: 84px; border: 3px solid var(--rule); border-radius: var(--radius-surface); background: var(--surface);
+  color: var(--ink); font: 900 40px/1 var(--font-display); box-shadow: 0 5px 0 var(--ink);
+}
+.key:active { transform: translateY(5px); box-shadow: 0 0 0 var(--ink); }
+.key.word { font: 700 18px/1 var(--font-sans); }
+.key.blank { visibility: hidden; }
+#keypad-cancel[hidden] { display: none; }
+#lock-code[hidden] { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
+  .dots.wrong { animation: none; }
   .count.pop, .flash.go { animation: none; }
   .btn, .tile canvas { transition: none; }
 }

@@ -64,7 +64,13 @@ The 2024 Mac mini only has USB-C ports: use a USB-C to USB-A adapter for the pri
 
 ## Before guests arrive
 
-On the iPad, tap **Settings** in the top corner of the booth:
+The booth starts on a keypad: guests need a code to start (staff type it in when someone has paid).
+The code is **0000** to begin with. Each code gets one session: pick, pose, print. Then it locks again.
+It also locks again if someone walks away for a minute.
+
+On the iPad, tap **Settings** in the top corner of the booth (it asks for the code too):
+
+- **Code to start:** "Guests need a code" or "Free for all", and change the 4-digit code.
 
 - **Captions:** let each guest write their own, or pick **Same for everyone** and type the event
   name (like "amy's 30th").

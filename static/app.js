@@ -25,6 +25,9 @@ const settings = {
   doodle: [], // finger-drawn strokes on Plain, in label coordinates
   showDate: localStorage.getItem('booth:date') !== 'false',
   sound: localStorage.getItem('booth:sound') !== 'false',
+  // Code to start: guests get it when they pay; it also guards Settings.
+  lock: localStorage.getItem('booth:lock') !== 'false',
+  code: /^\d{4}$/.test(localStorage.getItem('booth:code') ?? '') ? localStorage.getItem('booth:code') : '0000',
 }
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -210,6 +213,72 @@ function backToLive() {
 function backToStart() {
   backToLive()
   resetCaption()
+  startSession()
+}
+
+// ---- Code to start -------------------------------------------------------------------------------
+
+/** Show the keypad until the right code is entered (true) or Cancel is tapped (false). */
+function askCode({ title, hint, cancellable }) {
+  $('keypad-title').textContent = title
+  $('keypad-hint').textContent = hint
+  $('keypad-cancel').hidden = !cancellable
+  $('keypad').hidden = false
+  let entered = ''
+  const dots = [...$('dots').children]
+  const show = () => dots.forEach((d, i) => d.classList.toggle('on', i < entered.length))
+  show()
+  return new Promise((resolve) => {
+    const finish = (ok) => {
+      $('keypad').hidden = true
+      $('keys').onclick = $('keypad-cancel').onclick = null
+      removeEventListener('keydown', onKey)
+      resolve(ok)
+    }
+    const press = (k) => {
+      if (k === 'del') entered = entered.slice(0, -1)
+      else if (entered.length < 4) entered += k
+      show()
+      tone(1200, 30)
+      if (entered.length < 4) return
+      if (entered === settings.code) return setTimeout(() => finish(true), 120)
+      $('dots').classList.remove('wrong')
+      void $('dots').offsetWidth
+      $('dots').classList.add('wrong')
+      entered = ''
+      setTimeout(show, 300)
+    }
+    const onKey = (e) => {
+      if (/^\d$/.test(e.key)) press(e.key)
+      else if (e.key === 'Backspace') press('del')
+    }
+    $('keys').onclick = (e) => { const k = e.target.closest('button')?.dataset.key; if (k) press(k) }
+    $('keypad-cancel').onclick = () => finish(false)
+    addEventListener('keydown', onKey)
+  })
+}
+
+function buildKeys() {
+  for (const k of ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'key' + (k === 'del' ? ' word' : k === '' ? ' blank' : '')
+    b.textContent = k === 'del' ? 'Delete' : k
+    b.dataset.key = k
+    if (k === '') b.tabIndex = -1
+    $('keys').append(b)
+  }
+}
+
+/** Each guest's session starts here: behind the code if the lock is on. */
+async function startSession() {
+  if (settings.lock) {
+    stopCamera()
+    $('host').hidden = true
+    setState('locked')
+    await askCode({ title: 'Selfie booth', hint: 'Ask us for the code to start', cancellable: false })
+    log('session unlocked')
+  }
   showStep(steps()[0])
 }
 
@@ -251,7 +320,7 @@ function showStep(step) {
   syncTiles()
   if (step === 'caption') render(canvas, [], { ...settings, scale: LIVE_SCALE })
   if (step === 'live') startCamera()
-  if (step !== 'count') idle()
+  if (step !== 'count' || settings.lock) idle() // an unlocked booth left alone locks again
 }
 
 // Someone wanders off mid-way: go back to step 1 after a minute.
@@ -259,7 +328,7 @@ const IDLE_TIMEOUT = 60_000
 let idleTimer = 0
 function idle() {
   clearTimeout(idleTimer)
-  idleTimer = setTimeout(() => { if (['pattern', 'caption', 'live'].includes(state)) backToStart() }, IDLE_TIMEOUT)
+  idleTimer = setTimeout(() => { if (['count', 'pattern', 'caption', 'live'].includes(state)) backToStart() }, IDLE_TIMEOUT)
 }
 
 /** Tapping a tile only selects it; Next moves on. */
@@ -459,11 +528,33 @@ $('prev').onclick = () => {
   showStep(all[Math.max(0, all.indexOf(state) - 1)])
 }
 $('next').onclick = next
-$('settings').onclick = () => {
+$('settings').onclick = async () => {
   const open = $('host').hidden
+  if (open && settings.lock && !(await askCode({ title: 'Settings', hint: 'Enter the staff code', cancellable: true }))) return
   $('host').hidden = !open
   $('settings').setAttribute('aria-expanded', String(open))
 }
+function syncLock() {
+  $('lock-on').setAttribute('aria-checked', String(settings.lock))
+  $('lock-off').setAttribute('aria-checked', String(!settings.lock))
+  $('lock-code').hidden = !settings.lock
+}
+function setLock(on) {
+  settings.lock = on
+  localStorage.setItem('booth:lock', on)
+  syncLock()
+}
+$('lock-on').onclick = () => setLock(true)
+$('lock-off').onclick = () => setLock(false)
+$('lock-code').value = settings.code
+$('lock-code').oninput = (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4)
+  if (e.target.value.length === 4) {
+    settings.code = e.target.value
+    localStorage.setItem('booth:code', settings.code)
+  }
+}
+syncLock()
 $('print').onclick = print
 
 // ---- Printer status ----------------------------------------------------------------------------
@@ -486,7 +577,8 @@ buildTiles('count', COUNTS)
 buildTiles('pattern', PATTERNS)
 applyPaper()
 resetCaption()
-showStep(steps()[0])
+buildKeys()
+startSession()
 syncControls()
 pollStatus()
 setInterval(pollStatus, 5000)
