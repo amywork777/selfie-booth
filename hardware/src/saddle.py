@@ -7,6 +7,7 @@ bridging. The back is open for the printer's USB and power cables, and nothing t
 from cadgen import build123d as bd
 from cadgen import step
 
+from panels import heart
 from dims import (
     DECK_Y0, DECK_Z0, DECK_Z1, FRONT_PEG_X, FRONT_PEG_Z, INNER_HALF, LEG_T, LEG_Y0, LEG_Y1,
     OUTER_HALF, PEG_D, PEG_HEAD_D, PEG_HEAD_T, PEG_LEN, SCREW_HOLE_D, SCREW_SPACING_X,
@@ -37,6 +38,23 @@ def make_saddle():
     # Soften the outer vertical edges of the legs a little.
     outer_edges = body.edges().filter_by(bd.Axis.Z).filter_by(lambda e: abs(abs(e.center().X) - OUTER_HALF) < 1e-6)
     body = body.fillet(3.0, outer_edges)
+
+    # Save filament: a heart through each leg, and windows in the deck around the screw bosses.
+    with bd.BuildSketch(bd.Plane.YZ) as leg_heart:
+        bd.add(heart((LEG_Y0 + LEG_Y1) / 2, DECK_Z0 * 0.47, 64))
+    body -= bd.extrude(leg_heart.sketch, amount=OUTER_HALF + 1, both=True)
+    boss = 9.0  # material kept around each screw hole
+    rim = 8.0  # solid border round the deck
+    windows = [
+        (-SCREW_SPACING_X / 2 + boss, SCREW_SPACING_X / 2 - boss),  # between the screws
+        (SCREW_SPACING_X / 2 + boss, INNER_HALF - rim),  # outside them, each side
+        (-INNER_HALF + rim, -SCREW_SPACING_X / 2 - boss),
+    ]
+    for x0, x1 in windows:
+        with bd.BuildSketch(bd.Plane.XY.offset(DECK_Z0 - 1)) as win:
+            with bd.Locations(((x0 + x1) / 2, (DECK_Y0 + LEG_Y1) / 2)):
+                bd.RectangleRounded(x1 - x0, LEG_Y1 - DECK_Y0 - 2 * rim, 6)
+        body -= bd.extrude(win.sketch, amount=DECK_Z1 - DECK_Z0 + 2)
 
     for x in (-SCREW_SPACING_X / 2, SCREW_SPACING_X / 2):
         for y in CRADLE_SCREW_Y:

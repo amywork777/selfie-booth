@@ -12,7 +12,8 @@ with a slot where the print comes out.
 | Front plate | `DXF/front_plate.dxf` | Laser cut 3 mm sheet, 251 x 105 mm. Same layers. |
 | Screws | 4 x M3 x 12 self-tapping (or glue) | Up through the deck into the cradle. |
 
-Both prints fit a 256 mm Bambu plate. PLA, 3 walls, 15% infill is plenty.
+Both prints fit a 256 mm Bambu plate. PLA, 3 walls, 15% infill is plenty. Together they are about
+236 cm³ of solid model (the slicer will use less with infill).
 
 ## Putting it together
 
