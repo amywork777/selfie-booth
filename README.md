@@ -3,6 +3,8 @@
 An iPad selfie booth that prints on a 4x6 thermal label printer. Guests pick how many photos, pick a
 pattern, add a caption (or a doodle), pose, and walk away with a print.
 
+**Not technical? Read [START HERE](START%20HERE.md)** and double-click `Start Booth` on a Mac.
+
 ```
 iPad (Safari) ··Wi-Fi··> a Mac or Raspberry Pi running server.py ──USB──> thermal printer
 ```
@@ -21,19 +23,19 @@ The server only passes the finished label to the printer over USB. No printer dr
 
 ## Run it on a Mac
 
-One-time setup, in Terminal:
+Double-click **Start Booth** (`Start Booth.command`). The first run makes a Python environment and
+installs `requirements.txt` (pyusb, Pillow, and libusb-package, which bundles libusb so no Homebrew is
+needed), and it keeps the Mac awake while the booth runs. By hand, the same thing is:
 
 ```
-brew install libusb
-git clone https://github.com/amywork777/selfie-booth.git
-cd selfie-booth
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
+caffeinate -i .venv/bin/python server.py
 ```
 
 Every time:
 
 1. Plug the printer into the Mac and switch it on.
-2. Start the booth: `cd selfie-booth && .venv/bin/python server.py`
+2. Double-click **Start Booth** and leave its window open.
 3. On the iPad (same Wi-Fi as the Mac), open **https://selfie-booth.local:8443**. Add it to the Home
    Screen (Share, Add to Home Screen) for one-tap opening, and turn on Guided Access (Settings,
    Accessibility) to lock the iPad to the booth.
