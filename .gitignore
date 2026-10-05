@@ -6,3 +6,6 @@ node_modules/
 .playwright-mcp/
 *.png
 !docs/*.png
+hardware/.venv/
+hardware/tmp/
+hardware/.cadgen/
