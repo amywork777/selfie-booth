@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Selfie booth">
+  <title>Selfie booth</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-state="live">
+  <main class="booth">
+    <header class="top">
+      <h1 class="title">Selfie booth</h1>
+      <p class="status" id="status">Checking printer</p>
+    </header>
+
+    <section class="stage" aria-label="Label preview">
+      <div class="sheet">
+        <div class="paper">
+          <canvas id="label" aria-label="Your photo as it will print"></canvas>
+          <div class="count" id="count" aria-live="assertive"></div>
+          <div class="flash" id="flash"></div>
+          <div class="message" id="message" hidden></div>
+        </div>
+        <span class="sticker" aria-hidden="true">Free<br>prints</span>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="options" id="options">
+        <div class="field">
+          <span class="label">Frame</span>
+          <div class="choices" id="frames" role="radiogroup" aria-label="Frame"></div>
+        </div>
+        <label class="field">
+          <span class="label">Caption</span>
+          <input id="caption" type="text" maxlength="28" placeholder="Add a caption" autocomplete="off" enterkeyhint="done">
+        </label>
+        <div class="field">
+          <span class="label">Extras</span>
+          <div class="choices">
+            <button type="button" class="choice" id="date" aria-pressed="true">Date</button>
+            <button type="button" class="choice" id="sound" aria-pressed="true">Sound</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn primary" id="shoot">Take photo</button>
+        <button type="button" class="btn" id="retake">Retake</button>
+        <button type="button" class="btn primary" id="print">Print</button>
+      </div>
+    </section>
+  </main>
+
+  <video id="video" playsinline muted autoplay></video>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

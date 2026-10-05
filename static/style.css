@@ -1,0 +1,133 @@
+/* Toy route (taste/routes/toy.md): butter stage, plum outlines, candy pink accent, dot-matrix title. */
+@font-face { font-family: "Doto"; src: url(fonts/doto.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Caveat"; src: url(fonts/caveat.woff) format("woff"); font-weight: 700; font-display: swap; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 500 var(--text-body)/1.3 var(--font-sans);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.booth {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: calc(var(--space-unit) * 3);
+  padding: max(env(safe-area-inset-top), 20px) 28px max(env(safe-area-inset-bottom), 24px);
+}
+
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.title {
+  margin: 0;
+  font: 900 clamp(40px, 7vw, 64px)/1 var(--font-display);
+  letter-spacing: var(--tracking-display);
+}
+.status { margin: 0; font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); }
+.status.bad { color: var(--accent-ink); }
+
+/* The label preview: a sheet of thermal paper showing the exact dots that will print. */
+.stage { position: relative; display: grid; place-items: center; min-height: 0; }
+.sheet { position: relative; height: 100%; max-width: 100%; aspect-ratio: 808 / 1218; }
+.paper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border: 3px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 6px 6px 0 var(--ink);
+  overflow: hidden;
+}
+#label { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+.count {
+  position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  font: 900 min(40vw, 320px)/1 var(--font-display);
+  color: var(--accent);
+  -webkit-text-stroke: 4px var(--ink);
+}
+.count.pop { animation: pop 700ms var(--ease-out); }
+@keyframes pop { from { transform: scale(0.4); opacity: 0; } 40% { opacity: 1; } to { transform: scale(1); } }
+
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.flash.go { animation: flash 450ms ease-out; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+
+.message {
+  position: absolute; inset: auto 16px 16px; padding: 14px 18px;
+  background: var(--surface); border: 3px solid var(--rule); border-radius: var(--radius-control);
+  font-weight: 500; text-align: center;
+}
+
+/* Hand-made detail: one round die-cut sticker on the corner of the paper. */
+.sticker {
+  position: absolute; top: -18px; right: -22px; z-index: 2;
+  display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%;
+  background: #a8e6cf; color: var(--ink);
+  outline: 4px solid #fff; box-shadow: 0 6px 14px -8px rgba(36, 26, 34, 0.5);
+  font: 900 15px/1.05 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; text-align: center;
+  transform: rotate(10deg);
+}
+
+.controls { display: grid; gap: calc(var(--space-unit) * 3); }
+.options { display: grid; grid-template-columns: auto 1fr auto; gap: 20px; align-items: end; }
+.field { display: grid; gap: 8px; min-width: 0; }
+.label { font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); }
+.choices { display: flex; gap: 8px; }
+
+.choice, input, .btn {
+  font: inherit; color: var(--ink);
+  border: 3px solid var(--rule); border-radius: var(--radius-control);
+  background: var(--surface);
+}
+.choice { height: 52px; padding: 0 16px; }
+.choice[aria-checked="true"], .choice[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+input { height: 52px; width: 100%; padding: 0 14px; -webkit-user-select: text; user-select: text; }
+input::placeholder { color: var(--ink-muted); }
+input:focus, .choice:focus-visible, .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.actions { display: flex; gap: 14px; }
+.btn {
+  flex: 1; height: 88px; border-radius: var(--radius-surface);
+  font-size: 28px; font-weight: 700;
+  box-shadow: 0 6px 0 var(--ink);
+  transition: transform 90ms, box-shadow 90ms;
+}
+.btn:active { transform: translateY(6px); box-shadow: 0 0 0 var(--ink); }
+.btn.primary { background: var(--accent); }
+.btn:disabled { opacity: 0.5; }
+
+/* Which controls show in each state. */
+#retake, #print { display: none; }
+[data-state="review"] #shoot, [data-state="printing"] #shoot, [data-state="done"] #shoot { display: none; }
+[data-state="review"] #retake, [data-state="review"] #print,
+[data-state="printing"] #retake, [data-state="printing"] #print { display: block; }
+[data-state="countdown"] .options, [data-state="printing"] .options, [data-state="done"] .options { visibility: hidden; }
+[data-state="countdown"] #shoot { visibility: hidden; }
+[data-state="done"] .actions { visibility: hidden; }
+
+/* Landscape iPad: preview on the left, controls stacked on the right. */
+@media (orientation: landscape) and (min-width: 700px) {
+  .booth { grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: auto minmax(0, 1fr); }
+  .top { grid-column: 1 / -1; }
+  .controls { align-content: end; }
+  .options { grid-template-columns: 1fr; }
+  .actions { flex-direction: column; }
+  .btn { flex: none; }
+}
+
+@media (max-width: 600px) {
+  .options { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .count.pop, .flash.go { animation: none; }
+  .btn { transition: none; }
+}

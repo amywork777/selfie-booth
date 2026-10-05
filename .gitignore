@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+certs/
+node_modules/
+.claude/
