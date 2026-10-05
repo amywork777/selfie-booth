@@ -365,7 +365,7 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
     const dateSize = Math.round(Math.min(40, b.w / 16))
     if (text) {
       // Wide bands keep room for the stickers beside the caption.
-      const size = fitSize(ctx, text, b.w - (b.w >= 500 ? 220 : 40), Math.min(104, b.h * 0.45))
+      const size = fitSize(ctx, text, b.w - (b.w >= 500 ? 270 : 40), Math.min(104, b.h * 0.45))
       ctx.font = `700 ${size}px Caveat, "Bradley Hand", cursive`
       ctx.fillText(text, b.x + b.w / 2, showDate ? mid - dateSize * 0.9 : mid)
     }

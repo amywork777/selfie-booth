@@ -33,8 +33,9 @@ video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events:
 .status.bad { color: var(--accent-ink); }
 
 /* The label preview: a sheet of thermal paper showing the exact dots that will print. */
-.stage { position: relative; display: grid; place-items: center; min-height: 0; }
-.sheet { position: relative; height: 100%; max-width: 100%; aspect-ratio: 808 / 1218; }
+.stage { position: relative; display: grid; place-items: center; min-height: 0; container-type: size; }
+/* As big as the stage allows in either direction, always at the label's 808:1218 shape. */
+.sheet { position: relative; height: min(100cqh, 100cqw * 1218 / 808); aspect-ratio: 808 / 1218; }
 .paper {
   position: relative;
   width: 100%;
@@ -144,8 +145,20 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 .tile-poses { display: block; font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); margin-top: 4px; }
 .host { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; padding-top: 14px; border-top: 3px solid var(--rule); }
 
+/* Step 3: caption field and date toggle under the label preview. */
+.caption-step { display: none; gap: 12px; }
+[data-state="caption"] .caption-step { display: flex; }
+.caption-step input { flex: 1; height: 64px; font-size: 24px; }
+.caption-step .choice { height: 64px; padding: 0 22px; }
+#step-title:empty { display: none; }
+[data-state="countdown"] #step-title, [data-state="review"] #step-title,
+[data-state="printing"] #step-title, [data-state="done"] #step-title { visibility: hidden; }
+
 /* Which controls show in each state. */
-#retake, #print { display: none; }
+#retake, #print, #to-photo { display: none; }
+[data-state="caption"] #to-photo { display: block; }
+[data-state="caption"] #shoot { display: none; }
+[data-state="caption"] .sticker { display: none; }
 [data-state="review"] #back, [data-state="printing"] #back, [data-state="done"] #back { display: none; }
 [data-state="countdown"] #back { visibility: hidden; }
 [data-state="review"] #shoot, [data-state="printing"] #shoot, [data-state="done"] #shoot { display: none; }

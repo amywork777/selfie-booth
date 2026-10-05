@@ -24,14 +24,9 @@
       <div class="tiles" id="count-tiles" role="radiogroup" aria-labelledby="pick-title"></div>
       <div class="tiles" id="pattern-tiles" role="radiogroup" aria-labelledby="pick-title"></div>
       <div class="host" id="host" hidden>
-        <label class="field">
-          <span class="label">Caption</span>
-          <input id="caption" type="text" maxlength="28" placeholder="Add a caption" autocomplete="off" enterkeyhint="done">
-        </label>
         <div class="field">
-          <span class="label">Extras</span>
+          <span class="label">Booth settings</span>
           <div class="choices">
-            <button type="button" class="choice" id="date" aria-pressed="true">Date</button>
             <button type="button" class="choice" id="sound" aria-pressed="true">Sound</button>
           </div>
         </div>
@@ -55,8 +50,14 @@
     </section>
 
     <section class="controls">
+      <h2 class="step" id="step-title"></h2>
+      <div class="caption-step">
+        <input id="caption" type="text" maxlength="28" placeholder="Type a caption, or leave it blank" autocomplete="off" enterkeyhint="done" aria-labelledby="step-title">
+        <button type="button" class="choice" id="date" aria-pressed="true">Date</button>
+      </div>
       <div class="actions">
         <button type="button" class="btn" id="back">Back</button>
+        <button type="button" class="btn primary" id="to-photo">Next</button>
         <button type="button" class="btn primary" id="shoot">Take photo</button>
         <button type="button" class="btn" id="retake">Retake</button>
         <button type="button" class="btn primary" id="print">Print</button>

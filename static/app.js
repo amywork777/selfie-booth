@@ -17,7 +17,7 @@ const saved = (key, options, fallback) => (options[localStorage.getItem(key)] ? 
 const settings = {
   count: saved('booth:count', COUNTS, 'one'),
   pattern: saved('booth:pattern', PATTERNS, 'plain'),
-  caption: localStorage.getItem('booth:caption') ?? '',
+  caption: '', // each guest writes their own
   showDate: localStorage.getItem('booth:date') !== 'false',
   sound: localStorage.getItem('booth:sound') !== 'false',
 }
@@ -100,6 +100,7 @@ function renderTiles() {
 
 function rerender() {
   lastTiles = 0 // caption or date changed: redraw the tiles too
+  if (state === 'caption') render(canvas, [], { ...settings, scale: LIVE_SCALE })
   if (state === 'review' || state === 'printing') render(canvas, shots, { ...settings, scale: 1 })
 }
 
@@ -200,24 +201,31 @@ function backToLive() {
   idle()
 }
 
-/** Back to step 1, ready for the next guest. */
+/** Back to step 1, ready for the next guest: their caption starts blank. */
 function backToStart() {
   backToLive()
+  settings.caption = ''
+  $('caption').value = ''
   showStep('count')
 }
 
 const STEP_TITLES = {
-  count: ['Step 1 of 3', 'How many photos?'],
-  pattern: ['Step 2 of 3', 'Pick a pattern'],
+  count: ['Step 1 of 4', 'How many photos?'],
+  pattern: ['Step 2 of 4', 'Pick a pattern'],
+  caption: ['Step 3 of 4', 'Add a caption'],
+  live: ['Step 4 of 4', 'Smile!'],
 }
 function showStep(step) {
-  stopCamera() // the camera only runs on the photo step
+  if (step !== 'live') stopCamera() // the camera only runs on the photo step
   setState(step)
   const [num, title] = STEP_TITLES[step]
-  $('pick-title').innerHTML = `<span class="step-num">${num}</span>${title}`
+  const heading = step === 'count' || step === 'pattern' ? $('pick-title') : $('step-title')
+  heading.innerHTML = `<span class="step-num">${num}</span>${title}`
   lastTiles = 0
   syncTiles()
-  if (step === 'pattern') idle()
+  if (step === 'caption') render(canvas, [], { ...settings, scale: LIVE_SCALE })
+  if (step === 'live') startCamera()
+  if (step !== 'count') idle()
 }
 
 // Someone wanders off mid-way: go back to step 1 after a minute.
@@ -225,7 +233,7 @@ const IDLE_TIMEOUT = 60_000
 let idleTimer = 0
 function idle() {
   clearTimeout(idleTimer)
-  idleTimer = setTimeout(() => { if (state === 'live' || state === 'pattern') backToStart() }, IDLE_TIMEOUT)
+  idleTimer = setTimeout(() => { if (['pattern', 'caption', 'live'].includes(state)) backToStart() }, IDLE_TIMEOUT)
 }
 
 /** Tapping a tile only selects it; Next moves on. */
@@ -238,10 +246,10 @@ function pick(step, key) {
 
 function next() {
   if (state === 'count') return showStep('pattern')
-  log(`chosen: ${settings.count}, ${settings.pattern}`)
-  setState('live')
-  startCamera()
-  idle()
+  if (state === 'pattern') return showStep('caption')
+  $('caption').blur() // drop the keyboard before the camera
+  log(`chosen: ${settings.count}, ${settings.pattern}, "${settings.caption}"`)
+  showStep('live')
 }
 
 function syncTiles() {
@@ -311,7 +319,6 @@ function syncControls() {
 $('caption').value = settings.caption
 $('caption').oninput = (e) => {
   settings.caption = e.target.value
-  localStorage.setItem('booth:caption', settings.caption)
   rerender()
 }
 $('caption').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur() }
@@ -328,7 +335,12 @@ $('sound').onclick = () => {
 }
 $('shoot').onclick = shoot
 $('retake').onclick = backToLive
-$('back').onclick = () => { backToLive(); clearTimeout(idleTimer); showStep('pattern') }
+$('back').onclick = () => {
+  if (state === 'caption') return showStep('pattern')
+  backToLive()
+  showStep('caption')
+}
+$('to-photo').onclick = next
 $('prev').onclick = () => showStep('count')
 $('next').onclick = next
 $('settings').onclick = () => {
