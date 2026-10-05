@@ -17,21 +17,22 @@ const rect = (x, y, w, h, shot = 0) => ({ x, y, w, h, shot })
 // Each arrangement fills a pattern's content box: photos on top, the caption band underneath.
 
 const GAP = 16
-const bandHeight = (box) => Math.round(Math.max(160, box.h * 0.21))
+const bandHeight = (box) => Math.round(Math.max(150, box.h * 0.21))
 
 /** `n` photos stacked in a column over a caption band. */
-function column(box, n, bandH, firstShot = 0) {
+function column(box, n) {
+  const bandH = bandHeight(box)
   const area = box.h - bandH - GAP
   const h = (area - GAP * (n - 1)) / n
   return {
-    slots: Array.from({ length: n }, (_, i) => rect(box.x, box.y + i * (h + GAP), box.w, h, firstShot + i)),
+    slots: Array.from({ length: n }, (_, i) => rect(box.x, box.y + i * (h + GAP), box.w, h, i)),
     bands: [{ x: box.x, y: box.y + area + GAP, w: box.w, h: bandH }],
   }
 }
 
 export const COUNTS = {
-  one: { name: '1 photo', arrange: (box) => column(box, 1, bandHeight(box)) },
-  two: { name: '2 poses', arrange: (box) => column(box, 2, bandHeight(box)) },
+  one: { name: '1 photo', arrange: (box) => column(box, 1) },
+  two: { name: '2 poses', arrange: (box) => column(box, 2) },
   four: {
     name: '2 x 2',
     arrange(box) {
@@ -42,82 +43,105 @@ export const COUNTS = {
       return { slots, bands: [{ x: box.x, y: box.y + area + GAP, w: box.w, h: bandH }] }
     },
   },
-  twin: {
-    name: 'Twin strips',
-    // Four poses down each half, the same four on both, with a cut line between them.
-    arrange(box) {
-      const w = (box.w - GAP * 2) / 2
-      const left = column({ ...box, w }, 4, 150)
-      const right = column({ ...box, x: box.x + w + GAP * 2, w }, 4, 150)
-      return { slots: [...left.slots, ...right.slots], bands: [...left.bands, ...right.bands], cut: true }
-    },
-  },
+  // Two identical half-width strips, each a complete label with its own border, to cut apart.
+  twin: { name: 'Twin strips', halves: true, arrange: (box) => column(box, 4) },
 }
 
 // ---- Patterns -------------------------------------------------------------------------------------
 // A pattern is the border: how far in the photos start (inset), what is drawn under them (under) and
-// over them (art), the line round each photo, and the sticker pack that comes with it.
+// over them (art), the line round each photo, and the sticker pack that comes with it. Patterns draw
+// inside a panel (the whole label, or one twin strip); `k` shrinks the border for narrow panels.
 
 const inset = (t, r = t, b = t, l = r) => ({ t, r, b, l })
 
 export const PATTERNS = {
   plain: { name: 'Plain', stickers: 'none', inset: inset(36), stroke: 12 },
-  hearts: { name: 'Hearts', stickers: 'hearts', inset: inset(92), stroke: 10, art: (ctx) => chain(ctx, heart) },
+  hearts: { name: 'Hearts', stickers: 'hearts', inset: inset(92), stroke: 10, art: (ctx, p) => chain(ctx, heart, p) },
   polka: {
-    stickers: 'bows',
     name: 'Polka dot',
+    stickers: 'bows',
     inset: inset(100),
     stroke: 8,
-    under(ctx, L) {
-      // Staggered dots over the whole label; a white card then covers the middle.
-      ctx.fillStyle = '#000'
-      for (let row = 0, y = 0; y < H + 48; row++, y += 42) {
-        for (let x = row % 2 ? 24 : 0; x < W + 48; x += 48) {
-          ctx.beginPath()
-          ctx.arc(x, y, 12, 0, Math.PI * 2)
-          ctx.fill()
+    under(ctx, p) {
+      // Staggered dots over the whole panel; a white card then covers the middle.
+      const { frame: f, k } = p
+      clipTo(ctx, f, () => {
+        ctx.fillStyle = '#000'
+        for (let row = 0, y = f.y; y < f.y + f.h + 48; row++, y += 42 * k) {
+          for (let x = f.x + (row % 2 ? 24 * k : 0); x < f.x + f.w + 48; x += 48 * k) {
+            ctx.beginPath()
+            ctx.arc(x, y, 12 * k, 0, Math.PI * 2)
+            ctx.fill()
+          }
         }
-      }
-      card(ctx, L.box)
+      })
+      card(ctx, p)
     },
   },
   gingham: {
-    stickers: 'none',
     name: 'Gingham',
+    stickers: 'none',
     inset: inset(100),
     stroke: 8,
-    under(ctx, L) {
+    under(ctx, p) {
       // Picnic check: stripes are a fine dot pattern (they print grey), crossings are solid black.
-      const band = 40, step = 80
-      ctx.fillStyle = halftone(ctx)
-      for (let y = 0; y < H; y += step) ctx.fillRect(0, y, W, band)
-      for (let x = 0; x < W; x += step) ctx.fillRect(x, 0, band, H)
-      ctx.fillStyle = '#000'
-      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) ctx.fillRect(x, y, band, band)
-      card(ctx, L.box)
+      const { frame: f, k } = p
+      const band = 40 * k, step = 80 * k
+      clipTo(ctx, f, () => {
+        ctx.fillStyle = halftone(ctx)
+        for (let y = f.y; y < f.y + f.h; y += step) ctx.fillRect(f.x, y, f.w, band)
+        for (let x = f.x; x < f.x + f.w; x += step) ctx.fillRect(x, f.y, band, f.h)
+        ctx.fillStyle = '#000'
+        for (let y = f.y; y < f.y + f.h; y += step) for (let x = f.x; x < f.x + f.w; x += step) ctx.fillRect(x, y, band, band)
+      })
+      card(ctx, p)
     },
   },
-  daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx) => chain(ctx, flower) },
+  daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx, p) => chain(ctx, flower, p) },
 }
 
-/** A pattern plus a photo count: the photo slots and caption bands, ready to draw. */
+/**
+ * A pattern plus a photo count, ready to draw: one panel (or two for twin strips), each with its own
+ * frame, content box, photo slots and caption band.
+ */
 export function layout(count, pattern) {
   const P = PATTERNS[pattern] ?? PATTERNS.plain
   const C = COUNTS[count] ?? COUNTS.one
-  const i = P.inset
-  const box = { x: i.l, y: i.t, w: W - i.l - i.r, h: H - i.t - i.b }
-  const arranged = C.arrange(box)
-  return { ...P, ...arranged, box }
+  const frames = C.halves ? [{ x: 0, y: 0, w: W / 2, h: H }, { x: W / 2, y: 0, w: W / 2, h: H }] : [{ x: 0, y: 0, w: W, h: H }]
+  const panels = frames.map((frame) => {
+    const k = C.halves ? 0.6 : 1
+    const i = P.inset
+    const box = { x: frame.x + i.l * k, y: frame.y + i.t * k, w: frame.w - (i.l + i.r) * k, h: frame.h - (i.t + i.b) * k }
+    return { frame, k, box, ...C.arrange(box) }
+  })
+  return {
+    ...P,
+    panels,
+    stroke: P.stroke * (C.halves ? 0.75 : 1),
+    slots: panels.flatMap((p) => p.slots),
+    bands: panels.flatMap((p) => p.bands),
+    cut: Boolean(C.halves),
+  }
 }
 
 /** How many photos a count needs. */
 export const shotCount = (count) => ({ one: 1, two: 2, four: 4, twin: 4 })[count] ?? 1
 
+function clipTo(ctx, r, draw) {
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(r.x, r.y, r.w, r.h)
+  ctx.clip()
+  draw()
+  ctx.restore()
+}
+
 /** A white rounded card just outside the content box, so a pattern frames the photos. */
-function card(ctx, b) {
+function card(ctx, p) {
+  const b = p.box, m = 24 * p.k
   ctx.fillStyle = '#fff'
-  roundRect(ctx, b.x - 24, b.y - 24, b.w + 48, b.h + 48, 30)
-  ctx.lineWidth = 8
+  roundRect(ctx, b.x - m, b.y - m, b.w + m * 2, b.h + m * 2, 30 * p.k)
+  ctx.lineWidth = 8 * p.k
   ctx.strokeStyle = '#000'
   ctx.stroke()
 }
@@ -133,17 +157,18 @@ function halftone(ctx) {
   return ctx.createPattern(tile, 'repeat')
 }
 
-/** Shapes all the way round the label edge, alternating size and tilt. */
-function chain(ctx, shape) {
-  const inset = 46, step = 66
+/** Shapes all the way round the panel edge, alternating size and tilt. */
+function chain(ctx, shape, p) {
+  const { frame: f, k } = p
+  const inset = 46 * k, step = 66 * k
   const pts = []
-  for (let x = inset; x < W - inset; x += step) pts.push([x, inset], [x + step / 2, H - inset])
-  for (let y = inset + step; y < H - inset; y += step) pts.push([inset, y], [W - inset, y])
+  for (let x = f.x + inset; x < f.x + f.w - inset; x += step) pts.push([x, f.y + inset], [x + step / 2, f.y + f.h - inset])
+  for (let y = f.y + inset + step; y < f.y + f.h - inset; y += step) pts.push([f.x + inset, y], [f.x + f.w - inset, y])
   pts.forEach(([x, y], i) => {
     ctx.save()
     ctx.translate(x, y)
     ctx.rotate(i % 2 ? 0.25 : -0.25)
-    shape(ctx, i % 3 ? 24 : 30)
+    shape(ctx, (i % 3 ? 24 : 30) * k)
     ctx.restore()
   })
 }
@@ -332,7 +357,7 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
   ctx.setTransform(scale, 0, 0, scale, 0, 0)
   ctx.fillStyle = paper
   ctx.fillRect(0, 0, W, H)
-  L.under?.(ctx, L)
+  for (const p of L.panels) L.under?.(ctx, p)
 
   for (const s of L.slots) {
     const src = shots[s.shot]
@@ -347,11 +372,11 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
     }
   }
 
-  L.art?.(ctx, L)
+  for (const p of L.panels) L.art?.(ctx, p)
   if (L.cut) {
-    // Dashed cut line between twin strips.
+    // Dashed cut line on the seam between the twin strips, in the gap between their borders.
     ctx.fillStyle = ink
-    for (let y = L.box.y; y < L.box.y + L.box.h; y += 32) ctx.fillRect(W / 2 - 2, y, 4, 16)
+    for (let y = 8; y < H; y += 32) ctx.fillRect(W / 2 - 1, y, 2, 14)
   }
   drawStickers(ctx, L, L.stickers)
 
