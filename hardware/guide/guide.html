@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Selfie booth box: cut and assembly guide</title>
+<style>
+  @font-face { font-family: Doto; src: url(doto.woff2); font-weight: 100 900; }
+  @page { size: Letter; margin: 14mm 14mm 16mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #3a2a47; font: 10.5pt/1.45 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  h1 { font: 900 30pt/1 Doto, sans-serif; margin: 0 0 6mm; letter-spacing: -0.02em; }
+  h2 { font: 700 9pt/1 Doto, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: #7a6a86; margin: 7mm 0 3mm; }
+  p { margin: 0 0 2.5mm; }
+  .lead { font-size: 12.5pt; max-width: 165mm; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { text-align: left; vertical-align: top; padding: 1.6mm 2mm; border-bottom: 0.4mm solid #e6dccf; }
+  th { font-weight: 700; }
+  .parts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .parts figure { margin: 0; border: 0.4mm solid #3a2a47; border-radius: 2mm; padding: 2mm; }
+  .parts img { width: 100%; height: 34mm; object-fit: contain; }
+  figcaption { font-size: 9pt; } figcaption b { display: block; font-size: 10pt; }
+  .step { display: grid; grid-template-columns: 82mm 1fr; gap: 6mm; align-items: center; padding: 3mm 0; border-top: 0.4mm solid #e6dccf; break-inside: avoid; }
+  .step img { width: 100%; }
+  .num { font: 900 24pt/1 Doto, sans-serif; color: #d6447e; }
+  ul { margin: 0 0 2.5mm; padding-left: 5mm; } li { margin: 0.8mm 0; }
+  .page-break { break-before: page; }
+  .note { background: #fff3b0; border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0; }
+</style></head><body>
+
+<h1>Selfie booth box</h1>
+<p class="lead">A laser-cut plywood box that holds the whole selfie booth: a 14 in MacBook Pro hidden in the base, an iPad mini
+behind a window in the front, and a Rollo label printer behind a print slot. Nine pieces of plywood, no screws, just wood glue.
+Finished size 393 x 270 x 265 mm (15.5 x 10.6 x 10.4 in).</p>
+
+<h2>Cut files</h2>
+<p>Nine DXF files, one per piece, all for <b>6 mm (1/4 in) plywood</b>. In each file the <b>CUT</b> layer cuts through and the
+<b>ENGRAVE</b> layer engraves (only the front has engraving). Every piece fits a Glowforge bed. On 12 x 20 in sheets that's
+7 sheets: one each for the front, back, top, bottom and each side, plus one for the deck with the iPad holder and lock bar beside it.</p>
+<div class="parts">
+  <figure><img src="part_front.png"><figcaption><b>front</b>iPad window, print slot, engraved frame and sign. 393 x 270</figcaption></figure>
+  <figure><img src="part_back.png"><figcaption><b>back</b>Removable. Tabs, cord notch, heart vents. 381 x 264</figcaption></figure>
+  <figure><img src="part_left.png"><figcaption><b>left</b>Slots for the deck and lock bar, vents. 270 x 265</figcaption></figure>
+  <figure><img src="part_right.png"><figcaption><b>right</b>Same as the left. 270 x 265</figcaption></figure>
+  <figure><img src="part_top.png"><figcaption><b>top</b>393 x 265</figcaption></figure>
+  <figure><img src="part_bottom.png"><figcaption><b>bottom</b>Slots for the back's tabs. 393 x 265</figcaption></figure>
+  <figure><img src="part_deck.png"><figcaption><b>deck</b>Sits over the MacBook. Cable notch and hole, holder slots. 393 x 241</figcaption></figure>
+  <figure><img src="part_ipad_holder.png"><figcaption><b>ipad_holder</b>Holds the iPad against the window. 146 x 110</figcaption></figure>
+  <figure><img src="part_lock_bar.png"><figcaption><b>lock_bar</b>Holds the back on; heart handle. 433 x 29</figcaption></figure>
+</div>
+
+<h2>Also needed</h2>
+<table>
+  <tr><th>Item</th><th>Why</th></tr>
+  <tr><td>Wood glue</td><td>For the box. The back, holder and lock bar are not glued so they can come out.</td></tr>
+  <tr><td>Straight USB-C cable</td><td>Charges the iPad; plugs in from below through the deck.</td></tr>
+  <tr><td>USB-C to USB-A adapter</td><td>The printer's cable is USB-A; the MacBook has USB-C.</td></tr>
+  <tr><td>HDMI dummy plug ("4K HDMI headless display emulator", about $8)</td><td>Lets the MacBook keep running with its lid closed.</td></tr>
+  <tr><td>Fine sandpaper</td><td>For any tab that's too tight.</td></tr>
+</table>
+
+<div class="note"><b>Before cutting everything:</b> measure your plywood. "1/4 in" plywood is often 5.2 to 5.8 mm, and the finger joints
+only fit when the files match it. Cut one corner joint first. If it's loose or tight, the files can be regenerated for your exact
+thickness (one number in <code>hardware/src/box_dims.py</code>).</div>
+
+<h2 class="page-break">Assembly</h2>
+<div class="step"><img src="1.png"><div><span class="num">1</span>
+  <p><b>Glue the front, both sides and the bottom.</b> The finger joints only go together one way. The small hearts on the sides
+  go at the bottom; the slot near the top back of each side is for the lock bar.</p></div></div>
+<div class="step"><img src="2.png"><div><span class="num">2</span>
+  <p><b>Slide in the deck.</b> Its four tabs go through the matching slots in the sides. The notch in its front edge goes
+  on the left, behind the iPad window. Glue the tabs.</p></div></div>
+<div class="step"><img src="3.png"><div><span class="num">3</span>
+  <p><b>Glue on the top</b> and let everything dry. The back stays off.</p></div></div>
+<div class="step"><img src="4.png"><div><span class="num">4</span>
+  <p><b>Put in the iPad.</b> From underneath, push the USB-C cable up through the deck notch and plug it into the iPad. Stand the
+  iPad on the deck, screen against the window, camera at the top. Press the holder plate's two tabs into the slots behind it.
+  If the tabs are loose, a dot of glue holds them; tight, sand them a little.</p></div></div>
+<div class="step"><img src="5.png"><div><span class="num">5</span>
+  <p><b>MacBook, printer and labels.</b> Plug the HDMI dummy plug and charger into the MacBook, close the lid, and slide it into
+  the bay under the deck from the back. Set the printer on the deck, pushed right up to the front so its label lines up with the
+  slot. Put the stack of 4 x 6 labels behind it and feed the first label into the printer's back slot. Run the printer cable
+  and the iPad cable down through the deck to the MacBook.</p></div></div>
+<div class="step"><img src="6.png"><div><span class="num">6</span>
+  <p><b>Put on the back.</b> Lead the power cords out through the notch at the bottom. Drop the back's two bottom tabs into the
+  slots in the floor and tip it upright.</p></div></div>
+<div class="step"><img src="7.png"><div><span class="num">7</span>
+  <p><b>Slide in the lock bar.</b> Facing the back of the box, push it in through the slot near the top of the left-hand wall,
+  straight end first, through both walls behind the back panel, until the heart handle stops against the wall (as in the
+  picture). To open the box later, pull the bar out by the heart.</p></div></div>
+<div class="step"><img src="8.png"><div><span class="num">8</span>
+  <p><b>Switch on.</b> Plug in the power. The booth software, setup steps and the code to start are at
+  <b>amywork777.github.io/selfie-booth</b>. Guests need a code to start (0000 to begin with; change it in Settings).</p></div></div>
+
+<h2>Refilling labels</h2>
+<p>Slide out the lock bar, tip the back out, drop a new stack behind the printer and feed the first label in.</p>
+</body></html>
