@@ -59,7 +59,8 @@ than 6 mm (change `T` in `src/box_dims.py` and rebuild).
 **Ordering from SendCutSend instead:** upload the nine files in `DXF/box_sendcutsend/` (one of each),
 material Baltic Birch Plywood, .250 in. They're built for that sheet's 6.35 mm and have no engraving
 (SendCutSend doesn't engrave wood, and would cut the engraving lines through). Remake them with
-`.venv/bin/python src/box_sendcutsend.py`.
+`.venv/bin/python src/box_sendcutsend.py`. Quoted 2026-10-05 at $268.59 for one box (free shipping); 1/4 in
+MDF came out slightly dearer than the plywood, and 1/8 in hardboard is about half price but too thin for this design.
 
 Rebuild and check: `.venv/bin/python src/box.py && .venv/bin/python src/box_parts.py && .venv/bin/python checks/box_check.py`
 
