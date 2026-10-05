@@ -83,9 +83,9 @@ function loop(now) {
   if (state !== 'live' && state !== 'countdown') return
   if (now - lastFrame < 66 || !video.videoWidth) return // about 15 fps is plenty for a preview
   lastFrame = now
-  // Before shooting, every slot shows the camera. While shooting: poses taken, then the camera in
-  // the current slot, then the numbers of the poses still to come.
-  const live = state === 'live' ? Array(shotCount(settings.count)).fill(video) : [...shots, video]
+  // One pose at a time: poses already taken, then the camera in the current slot, then the numbers
+  // of the poses still to come. Before the first tap that's the camera in slot 1 only.
+  const live = [...shots, video]
   render(canvas, live, { ...settings, scale: LIVE_SCALE })
 }
 
@@ -159,7 +159,11 @@ async function shoot() {
       void $('flash').offsetWidth
       $('flash').classList.add('go')
     }
-    if (pose < total - 1) await sleep(700) // a beat to change pose
+    if (pose < total - 1) {
+      // The photo just taken stays in its slot; the camera has moved to the next one.
+      message('New pose!')
+      await sleep(1600)
+    }
   }
   message('')
   setState('review')
