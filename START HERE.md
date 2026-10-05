@@ -39,6 +39,29 @@ The Mac and iPad must be on the same Wi-Fi.
 
 To stop the booth, close the Start Booth window on the Mac.
 
+## Mac mini with no screen
+
+Do this once at home with a screen, keyboard and mouse plugged into the Mac mini (any TV with HDMI works):
+
+1. Do "The first time" steps above.
+2. On the Mac mini, join your **phone's hotspot** once (Wi-Fi menu, top right of the screen). It will rejoin it
+   by itself at any event. Or plug the Mac mini into the router with an Ethernet cable.
+3. In the selfie-booth folder, double-click **Start Automatically**.
+4. Open **System Settings**, **Users & Groups**, and set **Automatically log in** to your account.
+   - Greyed out? That means FileVault is on. Then at events: switch the Mac mini on, wait a minute, type your
+     password and press Return. No screen needed.
+
+At the event:
+
+1. Turn on your phone's hotspot. Join the iPad to it too.
+2. Plug in the printer and switch on the Mac mini.
+3. Wait about a minute, then tap the booth icon on the iPad.
+   - If it can't find the booth, open **http://selfie-booth.local:8000** in Safari.
+
+To turn automatic start off, double-click **Stop Starting Automatically**.
+
+The 2024 Mac mini only has USB-C ports: use a USB-C to USB-A adapter for the printer cable.
+
 ## Before guests arrive
 
 On the iPad, tap **Settings** in the top corner of the booth:

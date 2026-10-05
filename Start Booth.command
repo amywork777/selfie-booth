@@ -8,6 +8,14 @@ echo "------------"
 
 pause() { echo; read -n 1 -s -r -p "Press any key to close this window."; echo; }
 
+# Already running (for example, started automatically)? Just show the QR code page.
+if curl -s -o /dev/null --max-time 2 http://localhost:8000/status; then
+  echo
+  echo "The booth is already running. Opening the QR code page..."
+  open "http://localhost:8000/host"
+  exit 0
+fi
+
 # Python comes with Apple's free developer tools. If they're missing, macOS offers to install them.
 if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2>/dev/null; then
   echo

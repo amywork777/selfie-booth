@@ -9,3 +9,4 @@ node_modules/
 hardware/.venv/
 hardware/tmp/
 hardware/.cadgen/
+logs/

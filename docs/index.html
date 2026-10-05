@@ -28,6 +28,7 @@
     ol.steps li { border-top: 3px solid var(--rule); padding-top: 14px; }
     .num { display: block; font: 900 44px/1 var(--font-display); margin-bottom: 8px; }
     .need { columns: 2; padding-left: 20px; }
+    .section-lead { max-width: 640px; margin: 0 0 22px; }
     a { color: var(--ink); }
     @media (max-width: 700px) { ol.steps { grid-template-columns: 1fr; } .need { columns: 1; } }
     @media (prefers-reduced-motion: reduce) { .download { transition: none; } }
@@ -55,9 +56,27 @@
       just: double-click Start Booth, tap the icon.</li>
   </ol>
 
+  <h2>Mac mini with no screen</h2>
+  <p class="section-lead">The booth can run on a Mac mini tucked behind the printer, with no monitor. Set it up
+    once at home with a screen, keyboard and mouse (any TV with HDMI works), then take just the Mac mini to events.</p>
+  <ol class="steps">
+    <li><span class="num">1</span><b>Set up at home.</b> Do the three steps above with a screen attached. Then on
+      the Mac mini, join your phone's hotspot once from the Wi-Fi menu at the top right, so it can rejoin it
+      anywhere. (Or plug the Mac mini into the router with an Ethernet cable.)</li>
+    <li><span class="num">2</span><b>Turn on automatic start.</b> In the selfie-booth folder, double-click
+      <b>Start Automatically</b>. In System Settings, Users &amp; Groups, set <b>Automatically log in</b> to your
+      account, so the booth starts as soon as the Mac mini is switched on.</li>
+    <li><span class="num">3</span><b>At the event.</b> Turn on your phone's hotspot and join the iPad to it too. Plug
+      in the printer and switch on the Mac mini. After about a minute, tap the booth icon on the iPad.</li>
+  </ol>
+  <p class="small">If the iPad can't find the booth, open <b>http://selfie-booth.local:8000</b> in Safari. If
+    Automatically log in is greyed out (FileVault is on), switch the Mac mini on, wait a minute, then type your
+    password and press Return without a screen. To turn automatic start off, double-click
+    <b>Stop Starting Automatically</b>.</p>
+
   <h2>What you need</h2>
   <ul class="need">
-    <li>A Mac</li>
+    <li>A Mac (a MacBook, or a Mac mini with no screen)</li>
     <li>An iPad on the same Wi-Fi</li>
     <li>A Rollo USB label printer (X1038), plugged into the Mac</li>
     <li>4 x 6 direct thermal labels</li>
