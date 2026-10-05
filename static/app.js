@@ -24,7 +24,7 @@ const settings = {
 }
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
 
-let state = 'live'
+let state = 'pick'
 let shots = [] // captured poses, kept so layout and caption changes re-render them
 let reviewTimer = 0
 
@@ -65,8 +65,16 @@ async function startCamera() {
 // ---- Rendering ---------------------------------------------------------------------------------
 
 let lastFrame = 0
+let lastTiles = 0
 function loop(now) {
   requestAnimationFrame(loop)
+  if (state === 'pick') {
+    if (now - lastTiles > 400) { // tiles refresh a couple of times a second: enough to see yourself
+      lastTiles = now
+      renderTiles()
+    }
+    return
+  }
   if (state !== 'live' && state !== 'countdown') return
   if (now - lastFrame < 66 || !video.videoWidth) return // about 15 fps is plenty for a preview
   lastFrame = now
@@ -74,6 +82,15 @@ function loop(now) {
   // the current slot, then the numbers of the poses still to come.
   const live = state === 'live' ? Array(shotCount(settings.layout)).fill(video) : [...shots, video]
   render(canvas, live, { ...settings, scale: LIVE_SCALE })
+}
+
+const TILE_SCALE = 0.22
+function renderTiles() {
+  for (const tile of $('tiles').children) {
+    const layout = tile.dataset.key
+    const live = video.videoWidth ? Array(shotCount(layout)).fill(video) : []
+    render(tile.firstChild, live, { ...settings, layout, scale: TILE_SCALE })
+  }
 }
 
 function rerender() {
@@ -170,6 +187,29 @@ function backToLive() {
   shots = []
   message('')
   setState('live')
+  idle()
+}
+
+/** Back to step 1, ready for the next guest. */
+function backToStart() {
+  backToLive()
+  setState('pick')
+}
+
+// Someone picks a layout and wanders off: go back to the layout tiles after a minute.
+const IDLE_TIMEOUT = 60_000
+let idleTimer = 0
+function idle() {
+  clearTimeout(idleTimer)
+  idleTimer = setTimeout(() => { if (state === 'live') backToStart() }, IDLE_TIMEOUT)
+}
+
+function pickLayout(key) {
+  settings.layout = key
+  localStorage.setItem('booth:layout', key)
+  log(`layout: ${key}`)
+  setState('live')
+  idle()
 }
 
 async function print() {
@@ -188,12 +228,12 @@ async function print() {
     tone(660, 90); setTimeout(() => tone(990, 140), 110)
     setState('done')
     message('Grab your print!')
-    setTimeout(backToLive, 4000)
+    setTimeout(backToStart, 4000)
   } catch (err) {
     log(`print failed: ${err.message}`)
     message(`${err.message}. Tap Print to try again.`)
     setState('review')
-    reviewTimer = setTimeout(backToLive, REVIEW_TIMEOUT)
+    reviewTimer = setTimeout(backToStart, REVIEW_TIMEOUT)
   } finally {
     $('print').textContent = 'Print'
     $('print').disabled = $('retake').disabled = false
@@ -222,8 +262,27 @@ function buildChoices(boxId, options, setting) {
   }
 }
 
+function buildTiles() {
+  for (const [key, l] of Object.entries(LAYOUTS)) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'tile'
+    b.dataset.key = key
+    const n = shotCount(key)
+    const name = document.createElement('span')
+    name.className = 'tile-name'
+    name.textContent = l.name
+    const poses = document.createElement('span')
+    poses.className = 'tile-poses'
+    poses.textContent = n === 1 ? '1 photo' : `${n} poses`
+    name.append(poses)
+    b.append(document.createElement('canvas'), name)
+    b.onclick = () => pickLayout(key)
+    $('tiles').append(b)
+  }
+}
+
 function syncControls() {
-  for (const b of $('layouts').children) b.setAttribute('aria-checked', String(b.dataset.key === settings.layout))
   for (const b of $('stickers').children) b.setAttribute('aria-checked', String(b.dataset.key === settings.stickers))
   $('date').setAttribute('aria-pressed', String(settings.showDate))
   $('sound').setAttribute('aria-pressed', String(settings.sound))
@@ -249,6 +308,7 @@ $('sound').onclick = () => {
 }
 $('shoot').onclick = shoot
 $('retake').onclick = backToLive
+$('back').onclick = backToStart
 $('print').onclick = print
 
 // ---- Printer status ----------------------------------------------------------------------------
@@ -267,7 +327,7 @@ async function pollStatus() {
 
 // ---- Start ---------------------------------------------------------------------------------------
 
-buildChoices('layouts', LAYOUTS, 'layout')
+buildTiles()
 buildChoices('stickers', STICKERS, 'stickers')
 syncControls()
 pollStatus()

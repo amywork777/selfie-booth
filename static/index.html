@@ -9,12 +9,30 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-state="live">
+<body data-state="pick">
   <main class="booth">
     <header class="top">
       <h1 class="title">Selfie booth</h1>
       <p class="status" id="status">Checking printer</p>
     </header>
+
+    <section class="pick" aria-label="Pick a layout">
+      <h2 class="label">Step 1: pick a layout</h2>
+      <div class="tiles" id="tiles"></div>
+      <div class="host">
+        <label class="field">
+          <span class="label">Caption</span>
+          <input id="caption" type="text" maxlength="28" placeholder="Add a caption" autocomplete="off" enterkeyhint="done">
+        </label>
+        <div class="field">
+          <span class="label">Extras</span>
+          <div class="choices">
+            <button type="button" class="choice" id="date" aria-pressed="true">Date</button>
+            <button type="button" class="choice" id="sound" aria-pressed="true">Sound</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="stage" aria-label="Label preview">
       <div class="sheet">
@@ -31,27 +49,13 @@
     <section class="controls">
       <div class="options" id="options">
         <div class="field wide">
-          <span class="label">Layout</span>
-          <div class="choices" id="layouts" role="radiogroup" aria-label="Layout"></div>
-        </div>
-        <div class="field wide">
-          <span class="label">Stickers</span>
+          <span class="label">Step 2: stickers</span>
           <div class="choices" id="stickers" role="radiogroup" aria-label="Stickers"></div>
-        </div>
-        <label class="field">
-          <span class="label">Caption</span>
-          <input id="caption" type="text" maxlength="28" placeholder="Add a caption" autocomplete="off" enterkeyhint="done">
-        </label>
-        <div class="field">
-          <span class="label">Extras</span>
-          <div class="choices">
-            <button type="button" class="choice" id="date" aria-pressed="true">Date</button>
-            <button type="button" class="choice" id="sound" aria-pressed="true">Sound</button>
-          </div>
         </div>
       </div>
 
       <div class="actions">
+        <button type="button" class="btn" id="back">Layouts</button>
         <button type="button" class="btn primary" id="shoot">Take photo</button>
         <button type="button" class="btn" id="retake">Retake</button>
         <button type="button" class="btn primary" id="print">Print</button>

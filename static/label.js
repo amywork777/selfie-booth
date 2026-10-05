@@ -23,28 +23,16 @@ function twinSlots() {
 }
 
 export const LAYOUTS = {
-  classic: {
-    name: 'Classic',
-    slots: [rect(36, 36, 736, 904)],
-    bands: [{ x: 36, y: 940, w: 736, h: 242 }],
-    stroke: 12,
+  grid: {
+    name: '2 x 2',
+    slots: [rect(36, 36, 360, 440, 0), rect(412, 36, 360, 440, 1), rect(36, 492, 360, 440, 2), rect(412, 492, 360, 440, 3)],
+    bands: [{ x: 36, y: 932, w: 736, h: 250 }],
+    stroke: 10,
   },
   duo: {
     name: '2 poses',
     slots: [rect(36, 36, 736, 452, 0), rect(36, 508, 736, 452, 1)],
     bands: [{ x: 36, y: 960, w: 736, h: 222 }],
-    stroke: 10,
-  },
-  strip: {
-    name: '3 strip',
-    slots: [rect(36, 36, 736, 300, 0), rect(36, 352, 736, 300, 1), rect(36, 668, 736, 300, 2)],
-    bands: [{ x: 36, y: 968, w: 736, h: 214 }],
-    stroke: 10,
-  },
-  grid: {
-    name: '2 x 2',
-    slots: [rect(36, 36, 360, 440, 0), rect(412, 36, 360, 440, 1), rect(36, 492, 360, 440, 2), rect(412, 492, 360, 440, 3)],
-    bands: [{ x: 36, y: 932, w: 736, h: 250 }],
     stroke: 10,
   },
   twin: {
@@ -57,6 +45,38 @@ export const LAYOUTS = {
       ctx.fillStyle = '#000'
       for (let y = 10; y < H; y += 32) ctx.fillRect(W / 2 - 2, y, 4, 16)
     },
+  },
+  hearts: {
+    name: 'Heart border',
+    slots: [rect(92, 92, 624, 820)],
+    bands: [{ x: 60, y: 930, w: 688, h: 230 }],
+    stroke: 10,
+    art(ctx) {
+      // A chain of hearts all the way round the label, alternating size and tilt.
+      const inset = 46, step = 66
+      const pts = []
+      for (let x = inset; x < W - inset; x += step) pts.push([x, inset], [x + step / 2, H - inset])
+      for (let y = inset + step; y < H - inset; y += step) pts.push([inset, y], [W - inset, y])
+      pts.forEach(([x, y], i) => {
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(i % 2 ? 0.25 : -0.25)
+        heart(ctx, i % 3 ? 24 : 30)
+        ctx.restore()
+      })
+    },
+  },
+  classic: {
+    name: 'Classic',
+    slots: [rect(36, 36, 736, 904)],
+    bands: [{ x: 36, y: 940, w: 736, h: 242 }],
+    stroke: 12,
+  },
+  strip: {
+    name: '3 strip',
+    slots: [rect(36, 36, 736, 300, 0), rect(36, 352, 736, 300, 1), rect(36, 668, 736, 300, 2)],
+    bands: [{ x: 36, y: 968, w: 736, h: 214 }],
+    stroke: 10,
   },
   film: {
     name: 'Film',
