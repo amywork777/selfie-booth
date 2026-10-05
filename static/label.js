@@ -105,6 +105,13 @@ export const PATTERNS = {
       card(ctx, p)
     },
   },
+  doodle: {
+    name: 'Doodle',
+    stickers: 'none',
+    inset: inset(104),
+    outline: (ctx, s, k) => sketchRect(ctx, s, k),
+    art: (ctx, p) => doodles(ctx, p),
+  },
   daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx, p) => chain(ctx, daisy, p) },
 }
 
@@ -196,6 +203,101 @@ function halftone(ctx, tone) {
   const k = ctx.getTransform().a
   pattern.setTransform(new DOMMatrix([1 / k, 0, 0, 1 / k, 0, 0]))
   return pattern
+}
+
+// ---- Doodles ----------------------------------------------------------------------------------------
+// Pen-drawn marks with a little wobble. A fixed seed keeps them in the same places on every frame
+// of the live preview and every print.
+
+function seeded(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/** Stroke a list of points as one pen line, nudging each point a little so it looks hand-drawn. */
+function pen(ctx, pts, rand, wobble, close = false) {
+  ctx.beginPath()
+  pts.forEach(([x, y], i) => {
+    const jx = x + (rand() - 0.5) * wobble, jy = y + (rand() - 0.5) * wobble
+    i ? ctx.lineTo(jx, jy) : ctx.moveTo(jx, jy)
+  })
+  if (close) ctx.closePath()
+  ctx.stroke()
+}
+
+const ring = (n, f) => Array.from({ length: n + 1 }, (_, i) => f((i / n) * Math.PI * 2, i))
+
+const DOODLES = [
+  // spiral
+  (ctx, r, rand) => pen(ctx, Array.from({ length: 40 }, (_, i) => { const a = i * 0.45, d = (i / 40) * r; return [Math.cos(a) * d, Math.sin(a) * d] }), rand, r * 0.06),
+  // outline star
+  (ctx, r, rand) => pen(ctx, ring(10, (a, i) => { const d = i % 2 ? r * 0.45 : r; return [Math.cos(a - Math.PI / 2) * d, Math.sin(a - Math.PI / 2) * d] }), rand, r * 0.1, true),
+  // squiggle
+  (ctx, r, rand) => pen(ctx, Array.from({ length: 24 }, (_, i) => [-r + (i / 23) * r * 2, Math.sin(i * 0.8) * r * 0.35]), rand, r * 0.06),
+  // outline heart
+  (ctx, r, rand) => pen(ctx, ring(28, (a) => [r * 0.06 * 16 * Math.sin(a) ** 3, -r * 0.06 * (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a))]), rand, r * 0.08, true),
+  // smiley
+  (ctx, r, rand) => {
+    pen(ctx, ring(24, (a) => [Math.cos(a) * r, Math.sin(a) * r]), rand, r * 0.08, true)
+    pen(ctx, ring(10, (a) => [Math.cos(a / 4 + 0.6) * r * 0.55, Math.sin(a / 4 + 0.6) * r * 0.55]).slice(0, 9), rand, r * 0.05)
+    for (const ex of [-0.35, 0.35]) { ctx.beginPath(); ctx.arc(ex * r, -0.25 * r, r * 0.1, 0, Math.PI * 2); ctx.fill() }
+  },
+  // loopy flower
+  (ctx, r, rand) => {
+    pen(ctx, ring(60, (a) => { const d = r * (0.55 + 0.45 * Math.abs(Math.sin(a * 2.5))); return [Math.cos(a) * d, Math.sin(a) * d] }), rand, r * 0.06, true)
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.16, 0, Math.PI * 2); ctx.fill()
+  },
+  // zigzag
+  (ctx, r, rand) => pen(ctx, Array.from({ length: 7 }, (_, i) => [-r + (i / 6) * r * 2, i % 2 ? r * 0.35 : -r * 0.35]), rand, r * 0.08),
+  // sparkle lines
+  (ctx, r, rand) => {
+    for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI; pen(ctx, [[Math.cos(a) * r, Math.sin(a) * r], [-Math.cos(a) * r, -Math.sin(a) * r]], rand, r * 0.08) }
+  },
+  // dot cluster
+  (ctx, r, rand) => { for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc((rand() - 0.5) * r * 1.6, (rand() - 0.5) * r * 1.6, r * (0.1 + rand() * 0.1), 0, Math.PI * 2); ctx.fill() } },
+]
+
+/** Doodles scattered all the way round the panel, in the border between its edge and the photos. */
+function doodles(ctx, p) {
+  const { frame: f, box, k } = p
+  const rand = seeded(7)
+  const band = Math.min(box.x - f.x, box.y - f.y) // border width
+  const mid = band / 2
+  const step = 94 * k
+  const pts = []
+  for (let x = f.x + mid; x < f.x + f.w - mid; x += step) pts.push([x, f.y + mid], [x + step / 2, f.y + f.h - mid])
+  for (let y = f.y + mid + step; y < f.y + f.h - mid - step / 2; y += step) pts.push([f.x + mid, y], [f.x + f.w - mid, y])
+  ctx.strokeStyle = '#000'
+  ctx.fillStyle = '#000'
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.lineWidth = 6 * k
+  pts.forEach(([x, y], i) => {
+    ctx.save()
+    ctx.translate(x + (rand() - 0.5) * 14 * k, y + (rand() - 0.5) * 14 * k)
+    ctx.rotate((rand() - 0.5) * 1.2)
+    DOODLES[i % DOODLES.length](ctx, (27 + rand() * 11) * k, rand)
+    ctx.restore()
+  })
+}
+
+/** A photo outline drawn twice by hand: a wobbly line with a looser second pass. */
+function sketchRect(ctx, s, k) {
+  const rand = seeded(Math.round(s.x * 7 + s.y))
+  const edge = (x0, y0, x1, y1) => Array.from({ length: 9 }, (_, i) => [x0 + ((x1 - x0) * i) / 8, y0 + ((y1 - y0) * i) / 8])
+  const corners = [[s.x, s.y], [s.x + s.w, s.y], [s.x + s.w, s.y + s.h], [s.x, s.y + s.h], [s.x, s.y]]
+  const pts = corners.slice(0, 4).flatMap((c, i) => edge(...c, ...corners[i + 1]))
+  ctx.strokeStyle = '#000'
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.lineWidth = 6 * k
+  pen(ctx, pts, rand, 5 * k, true)
+  ctx.lineWidth = 3 * k
+  pen(ctx, pts.map(([x, y]) => [x + 5 * k, y + 4 * k]), rand, 9 * k, true)
 }
 
 /** Small hearts spaced evenly round a photo's edge. */
