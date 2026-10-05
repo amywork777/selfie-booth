@@ -237,8 +237,8 @@ function spots(layout) {
   // Narrow caption bands (twin strips) have no room beside the text.
   for (const b of layout.bands.filter((b) => b.w >= 500)) {
     const r = Math.min(30, b.w * 0.06)
-    out.push({ x: b.x + r * 2.4, y: b.y + b.h * 0.4, r, a: -0.2 })
-    out.push({ x: b.x + b.w - r * 2.4, y: b.y + b.h * 0.4, r, a: 0.2 })
+    out.push({ x: b.x + r * 1.3, y: b.y + b.h * 0.42, r, a: -0.2 })
+    out.push({ x: b.x + b.w - r * 1.3, y: b.y + b.h * 0.42, r, a: 0.2 })
   }
   return out
 }
@@ -412,17 +412,20 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   for (const b of L.bands) {
-    const mid = b.y + b.h / 2
-    const dateSize = Math.round(Math.min(40, b.w / 16))
+    // Caption and date are one block, as big as the band allows, centred in it.
+    const dateSize = showDate ? Math.round(Math.min(56, b.w / 11, b.h * 0.24)) : 0
+    const gap = text && showDate ? dateSize * 0.5 : 0
+    // Wide bands keep room for the stickers beside the caption.
+    const room = b.w - (b.w >= 500 ? 190 : 24)
+    const capSize = text ? fitSize(ctx, text, room, Math.min(150, (b.h - dateSize - gap) * 0.95)) : 0
+    const top = b.y + (b.h - (capSize * 0.8 + gap + dateSize)) / 2
     if (text) {
-      // Wide bands keep room for the stickers beside the caption.
-      const size = fitSize(ctx, text, b.w - (b.w >= 500 ? 270 : 40), Math.min(104, b.h * 0.45))
-      ctx.font = `700 ${size}px Caveat, "Bradley Hand", cursive`
-      ctx.fillText(text, b.x + b.w / 2, showDate ? mid - dateSize * 0.9 : mid)
+      ctx.font = `700 ${capSize}px Caveat, "Bradley Hand", cursive`
+      ctx.fillText(text, b.x + b.w / 2, top + capSize * 0.4)
     }
     if (showDate) {
       ctx.font = `900 ${dateSize}px Doto, "Helvetica Neue", sans-serif`
-      ctx.fillText(DATE.format(new Date()).toUpperCase(), b.x + b.w / 2, text ? mid + dateSize * 1.6 : mid)
+      ctx.fillText(DATE.format(new Date()).toUpperCase(), b.x + b.w / 2, top + capSize * 0.8 + gap + dateSize / 2)
     }
   }
 
