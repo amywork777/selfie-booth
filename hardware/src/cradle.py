@@ -12,16 +12,16 @@ from cadgen import step, threemf
 
 from panels import heart
 from dims import (
-    BACK_H, BACK_T, BEZEL_PEG_Z, TOPPER_FIT, TOPPER_POST_W, TOPPER_POST_X, TOPPER_SLEEVE_FLOOR, TOPPER_SLEEVE_Z, TOPPER_T, CABLE_NOTCH_W, FLOOR_T, LIP_H, LIP_T, PEG_D, PEG_HEAD_D, PEG_HEAD_T,
+    BACK_H, BACK_T, BEZEL_PEG_Z, PEG_PAD, TOPPER_FIT, TOPPER_POST_W, TOPPER_POST_X, TOPPER_SLEEVE_FLOOR, TOPPER_SLEEVE_Z, TOPPER_T, CABLE_NOTCH_W, FLOOR_T, LIP_H, LIP_T, PEG_D, PEG_HEAD_D, PEG_HEAD_T,
     PEG_LEN, POCKET_DEPTH, POCKET_W, SCREW_PILOT_D, SCREW_SPACING_X, TILT_DEG, WALL_H, WALL_T, WALL_X,
 )
 
 HALF = POCKET_W / 2 + WALL_T  # outer half-width of the cradle
 DEPTH = LIP_T + POCKET_DEPTH + BACK_T  # lip front to back-plate back
-GUSSET_T = 6.0
+GUSSET_T = 8.0
 GUSSET_X = SCREW_SPACING_X / 2  # the back screws go up into the gussets
-GUSSET_REACH = 45.0  # how far behind the back plate each gusset's foot runs
-GUSSET_H = 88.0
+GUSSET_REACH = 48.0  # how far behind the back plate each gusset's foot runs
+GUSSET_H = 100.0
 SCREW_Y = (12.0, 52.0)  # from the lip front; must match saddle.CRADLE_SCREW_Y offsets
 PILOT_DEPTH = 10.0
 
@@ -45,15 +45,19 @@ def upright():
     lip = box(-HALF, HALF, 0, LIP_T, 0, FLOOR_T + LIP_H)
     back = box(-HALF, HALF, pocket_back, DEPTH, 0, BACK_H)
     walls = [box(POCKET_W / 2, HALF, 0, pocket_back, 0, WALL_H), box(-HALF, -POCKET_W / 2, 0, pocket_back, 0, WALL_H)]
-    # Heart window in the back plate, hidden behind the iPad, to save filament.
+    # Heart window in the back plate, hidden behind the iPad, to save filament. It stays well inside
+    # the ribs (at GUSSET_X) so they join solid plate along their whole height.
     with bd.BuildSketch(bd.Plane.XZ) as back_heart:
-        bd.add(heart(0, BACK_H / 2 + 2, 116))
+        bd.add(heart(0, BACK_H / 2, 2 * (GUSSET_X - GUSSET_T / 2 - 10)))
     back -= bd.extrude(back_heart.sketch, amount=-(DEPTH + 1))
     body = floor + lip + back + walls[0] + walls[1]
     # Notch for a right-angle USB-C cable: through the lip and the floor under the iPad's port.
     body -= box(-CABLE_NOTCH_W / 2, CABLE_NOTCH_W / 2, -1, pocket_back, -1, FLOOR_T + LIP_H + 1)
     for sx in (-1, 1):
         for z in BEZEL_PEG_Z:
+            # A solid pad on the outside of the wall for each peg to grow from.
+            x0, x1 = POCKET_W / 2, POCKET_W / 2 + PEG_PAD
+            body += box(min(sx * x0, sx * x1), max(sx * x0, sx * x1), 0, 6.0, z - 8, z + 8)
             body += peg(sx * WALL_X, z)
     # Sleeves on the back face for the sign topper's posts.
     z0, z1 = TOPPER_SLEEVE_Z

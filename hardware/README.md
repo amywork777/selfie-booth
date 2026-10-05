@@ -64,5 +64,13 @@ uv venv --python 3.11 .venv && uv pip install --python .venv/bin/python "cadgen[
 .venv/bin/python src/print_layout.py
 .venv/bin/python src/bezel.py
 .venv/bin/python src/front_plate.py
+.venv/bin/python src/panels_print.py
+.venv/bin/python src/signs.py
 .venv/bin/python src/booth.py      # everything together, with stand-in printer and iPad, for review
+.venv/bin/python checks/fit_check.py
 ```
+
+`checks/fit_check.py` confirms every printed part is one connected piece and fits the plate, the
+cradle's ribs are joined to solid back plate, no parts collide, the saddle stays at least 3 mm from the
+printer, the pegs line up with the keyholes, the screw holes line up, and the topper sits in its
+sleeves. Run it after changing anything.

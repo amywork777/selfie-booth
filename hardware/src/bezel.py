@@ -9,13 +9,13 @@ from cadgen import build123d as bd
 from cadgen import dxf
 
 from dims import (
-    BEZEL_PEG_Z, CAMERA_FROM_TOP, FLOOR_T, IPAD_H, POCKET_W, SCREEN_H, SCREEN_R, SCREEN_W, WALL_T, WALL_X,
+    BEZEL_PEG_Z, CAMERA_FROM_TOP, PEG_PAD, FLOOR_T, IPAD_H, POCKET_W, SCREEN_H, SCREEN_R, SCREEN_W, WALL_T, WALL_X,
 )
 from panels import heart, keyhole, scalloped_rect, text
 
 BOTTOM = 2.0  # just above the deck, which the bezel must clear
 IPAD_TOP = FLOOR_T + IPAD_H
-BODY_HALF_W = POCKET_W / 2 + WALL_T + 5.0
+BODY_HALF_W = POCKET_W / 2 + PEG_PAD + 5.0  # room round the keyholes
 SIGN_H = 44.0  # keeps the whole bezel under 256 mm so it also fits a Bambu plate
 SIGN_HALF_W = BODY_HALF_W - 6.0
 BUMP = 7.0

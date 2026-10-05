@@ -10,7 +10,7 @@ from cadgen import step
 from panels import heart
 from dims import (
     DECK_Y0, DECK_Z0, DECK_Z1, FRONT_PEG_X, FRONT_PEG_Z, INNER_HALF, LEG_T, LEG_Y0, LEG_Y1,
-    OUTER_HALF, PEG_D, PEG_HEAD_D, PEG_HEAD_T, PEG_LEN, SCREW_HOLE_D, SCREW_SPACING_X,
+    OUTER_HALF, PEG_D, PEG_HEAD_D, PEG_PAD, PEG_HEAD_T, PEG_LEN, SCREW_HOLE_D, SCREW_SPACING_X,
 )
 
 # Where the cradle's screws land on the deck (cradle base centre, see cradle.py).
@@ -41,7 +41,7 @@ def make_saddle():
 
     # Save filament: a heart through each leg, and windows in the deck around the screw bosses.
     with bd.BuildSketch(bd.Plane.YZ) as leg_heart:
-        bd.add(heart((LEG_Y0 + LEG_Y1) / 2, DECK_Z0 * 0.47, 78))
+        bd.add(heart((LEG_Y0 + LEG_Y1) / 2, DECK_Z0 * 0.47, 64))
     body -= bd.extrude(leg_heart.sketch, amount=OUTER_HALF + 1, both=True)
     boss = 7.0  # material kept around each screw hole
     rim = 6.0  # solid border round the deck
@@ -50,10 +50,12 @@ def make_saddle():
         (SCREW_SPACING_X / 2 + boss, INNER_HALF - rim),  # outside them, each side
         (-INNER_HALF + rim, -SCREW_SPACING_X / 2 - boss),
     ]
+    # Windows start behind the cradle's base, so the cradle sits on solid deck.
+    win_y0, win_y1 = DECK_Y0 + 22.0, LEG_Y1 - rim
     for x0, x1 in windows:
         with bd.BuildSketch(bd.Plane.XY.offset(DECK_Z0 - 1)) as win:
-            with bd.Locations(((x0 + x1) / 2, (DECK_Y0 + LEG_Y1) / 2)):
-                bd.RectangleRounded(x1 - x0, LEG_Y1 - DECK_Y0 - 2 * rim, 6)
+            with bd.Locations(((x0 + x1) / 2, (win_y0 + win_y1) / 2)):
+                bd.RectangleRounded(x1 - x0, win_y1 - win_y0, 6)
         body -= bd.extrude(win.sketch, amount=DECK_Z1 - DECK_Z0 + 2)
 
     for x in (-SCREW_SPACING_X / 2, SCREW_SPACING_X / 2):
@@ -62,6 +64,10 @@ def make_saddle():
 
     for sx in (-1, 1):
         for z in FRONT_PEG_Z:
+            # A solid pad reaching in from the leg, in front of the printer, for each peg.
+            x0, x1 = OUTER_HALF - PEG_PAD, INNER_HALF
+            # 4 mm deep: leaves 4 mm between the pads and the printer's front face.
+            body += box(min(sx * x0, sx * x1), max(sx * x0, sx * x1), LEG_Y0, LEG_Y0 + 4.0, z - 8, z + 8)
             body += peg(sx * FRONT_PEG_X, z, LEG_Y0)
     return body
 
