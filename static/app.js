@@ -195,10 +195,16 @@ function backToStart() {
   showStep('count')
 }
 
+const STEP_TITLES = {
+  count: ['Step 1 of 3', 'How many photos?'],
+  pattern: ['Step 2 of 3', 'Pick a pattern'],
+}
 function showStep(step) {
   setState(step)
-  $('pick-title').textContent = step === 'count' ? 'Step 1: how many photos' : 'Step 2: pick a pattern'
+  const [num, title] = STEP_TITLES[step]
+  $('pick-title').innerHTML = `<span class="step-num">${num}</span>${title}`
   lastTiles = 0
+  syncTiles()
   if (step === 'pattern') idle()
 }
 
@@ -210,13 +216,25 @@ function idle() {
   idleTimer = setTimeout(() => { if (state === 'live' || state === 'pattern') backToStart() }, IDLE_TIMEOUT)
 }
 
+/** Tapping a tile only selects it; Next moves on. */
 function pick(step, key) {
   settings[step] = key
   localStorage.setItem(`booth:${step}`, key)
-  log(`${step}: ${key}`)
-  if (step === 'count') return showStep('pattern')
+  syncTiles()
+  if (step === 'pattern') idle()
+}
+
+function next() {
+  if (state === 'count') return showStep('pattern')
+  log(`chosen: ${settings.count}, ${settings.pattern}`)
   setState('live')
   idle()
+}
+
+function syncTiles() {
+  for (const step of ['count', 'pattern']) {
+    for (const t of $(`${step}-tiles`).children) t.setAttribute('aria-checked', String(t.dataset.key === settings[step]))
+  }
 }
 
 async function print() {
@@ -255,6 +273,7 @@ function buildTiles(step, options) {
     const b = document.createElement('button')
     b.type = 'button'
     b.className = 'tile'
+    b.role = 'radio'
     b.dataset.key = key
     const name = document.createElement('span')
     name.className = 'tile-name'
@@ -297,7 +316,13 @@ $('sound').onclick = () => {
 $('shoot').onclick = shoot
 $('retake').onclick = backToLive
 $('back').onclick = () => { backToLive(); clearTimeout(idleTimer); showStep('pattern') }
-$('to-count').onclick = () => showStep('count')
+$('prev').onclick = () => showStep('count')
+$('next').onclick = next
+$('settings').onclick = () => {
+  const open = $('host').hidden
+  $('host').hidden = !open
+  $('settings').setAttribute('aria-expanded', String(open))
+}
 $('print').onclick = print
 
 // ---- Printer status ----------------------------------------------------------------------------
@@ -318,6 +343,7 @@ async function pollStatus() {
 
 buildTiles('count', COUNTS)
 buildTiles('pattern', PATTERNS)
+showStep('count')
 syncControls()
 pollStatus()
 setInterval(pollStatus, 5000)
