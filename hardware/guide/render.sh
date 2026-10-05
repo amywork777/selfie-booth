@@ -13,3 +13,6 @@ shot guide/5.png 150:28 front left right bottom deck ipad_holder ipad_standin ro
 shot guide/6.png 150:20 front left right bottom deck top ipad_holder ipad_standin rollo_standin labels_standin macbook_standin back
 shot guide/7.png 150:20 front left right bottom deck top ipad_holder ipad_standin rollo_standin labels_standin macbook_standin back lock_bar
 shot guide/8.png 335:16 front left right bottom deck top ipad_holder ipad_standin rollo_standin labels_standin macbook_standin back lock_bar
+for p in front back left right top bottom deck ipad_holder lock_bar; do
+  .venv/bin/cadgen dxf snapshot DXF/box/$p.dxf guide/part_$p.png | tail -1
+done

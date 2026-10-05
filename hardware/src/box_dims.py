@@ -10,7 +10,10 @@ World frame: X across the front (left to right as you face it), Y from the front
 back, Z up from the table.
 """
 
-T = 6.0  # plywood thickness (1/4 in). Measure yours: real 1/4 in plywood is often thinner.
+# Plywood thickness: 6 mm for the Glowforge. Measure yours: real plywood varies. (box_sendcutsend.py
+# rebuilds at 6.35 mm, SendCutSend's 1/4 in birch, by rewriting this line while it runs.)
+T = 6.0
+SLOT_FIT = 0.25  # each side, so a tab still goes through a slot when the sheet comes out a bit thick
 
 # Outer box.
 W, H, D = 393.0, 270.0, 265.0

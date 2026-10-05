@@ -25,11 +25,11 @@ out, and the MacBook slides out the back.
 | Part | What it does |
 | --- | --- |
 | front | iPad window (94% of the iPad face shows, camera included) and print slot; engraved decoration |
-| left, right | finger joints, slots for the deck's tabs and the lock bar, low heart vents for the MacBook |
+| left, right | finger joints, slots for the deck's tabs and the lock bar |
 | top, bottom | finger joints; the bottom has slots for the back's tabs |
 | deck | over the MacBook; notch for the iPad's cable, hole for the printer's cable, slots for the holder |
 | ipad_holder | presses the iPad against the window; tabs into the deck |
-| back | drops into the floor slots; cord notch, heart vents |
+| back | drops into the floor slots; cord notch, a row of vent slots behind the MacBook |
 | lock_bar | slides through the side walls to hold the back on; heart handle |
 
 **Also needed:** wood glue; a straight USB-C cable for the iPad (it plugs down through the deck); a
@@ -55,6 +55,11 @@ Do the one-time "Start Automatically" setup from START HERE with the lid open, t
 60 mm and covers the whole upper part of the printer's front, so the label gets out wherever it leaves
 the printer. Measure your plywood and cut one test joint first: real 1/4 in plywood is often thinner
 than 6 mm (change `T` in `src/box_dims.py` and rebuild).
+
+**Ordering from SendCutSend instead:** upload the nine files in `DXF/box_sendcutsend/` (one of each),
+material Baltic Birch Plywood, .250 in. They're built for that sheet's 6.35 mm and have no engraving
+(SendCutSend doesn't engrave wood, and would cut the engraving lines through). Remake them with
+`.venv/bin/python src/box_sendcutsend.py`.
 
 Rebuild and check: `.venv/bin/python src/box.py && .venv/bin/python src/box_parts.py && .venv/bin/python checks/box_check.py`
 

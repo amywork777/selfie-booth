@@ -15,7 +15,7 @@ from box_dims import (
     BACK_Y0, BAR_FIT, BAR_H, BAR_Y0, BAR_Z0, BAY_Z0, CABLE_NOTCH_D, CABLE_NOTCH_W, D, DECK_TOP, FINGER, H,
     HOLDER_FIT, IPAD_CORNER_R, IPAD_CX, IPAD_CZ, IPAD_H, IPAD_T, IPAD_W, IPAD_Z0, LABELS_D, LABELS_H, LABELS_W,
     MBP_D, MBP_H, MBP_W, PRINTER_CX, PRINTER_D, PRINTER_H, PRINTER_W, PRINTER_Y0, SLOT_W, SLOT_Z0, SLOT_Z1, T,
-    TAB, W, WINDOW_H, WINDOW_W,
+    SLOT_FIT, TAB, W, WINDOW_H, WINDOW_W,
 )
 from panels import heart
 
@@ -56,9 +56,11 @@ def finger_joint(parts, a, b):
 
 
 def through_tab(parts, tabbed, slotted, tab):
-    """A tab on one piece passing through a matching slot in another."""
+    """A tab on one piece passing through a slot in another, the slot SLOT_FIT bigger all round."""
     parts[tabbed] = parts[tabbed] + tab
-    parts[slotted] = parts[slotted] - tab
+    x0, x1, y0, y1, z0, z1 = bbox(tab)
+    f = SLOT_FIT
+    parts[slotted] = parts[slotted] - box(x0 - f, x1 + f, y0 - f, y1 + f, z0 - f, z1 + f)
 
 
 def xz_cut(sketch, y0, depth):
@@ -100,14 +102,12 @@ def make_parts():
 
     # iPad holder: one plate behind the iPad, tabbed into the deck, pressing it against the window.
     hy0 = T + IPAD_T + HOLDER_FIT
-    holder = box(IPAD_CX - HOLDER_W / 2, IPAD_CX + HOLDER_W / 2, hy0, hy0 + T, DECK_TOP, DECK_TOP + HOLDER_H)
-    with bd.BuildSketch(bd.Plane.XZ) as hw:
-        bd.add(heart(IPAD_CX, DECK_TOP + HOLDER_H / 2 + 6, 70))
-    parts["ipad_holder"] = holder - xz_cut(hw.sketch, hy0 - 1, T + 2)
+    parts["ipad_holder"] = box(IPAD_CX - HOLDER_W / 2, IPAD_CX + HOLDER_W / 2, hy0, hy0 + T, DECK_TOP, DECK_TOP + HOLDER_H)
     for dx in (-32, 32):
         through_tab(parts, "ipad_holder", "deck", box(IPAD_CX + dx - 12, IPAD_CX + dx + 12, hy0, hy0 + T, BAY_Z0, DECK_TOP))
 
-    # Back: sits between the side walls; two tabs drop into slots in the floor; cord notch; vents.
+    # Back: sits between the side walls; two tabs drop into slots in the floor; cord notch; one row of
+    # vent slots behind the MacBook (the only thing in the box that runs all day).
     parts["back"] = box(T, W - T, BACK_Y0, BACK_Y0 + T, T, H - T)
     back_tabs_x = (W * 0.28, W * 0.72)
     for x in back_tabs_x:
@@ -115,12 +115,10 @@ def make_parts():
     cord_x = W / 2  # cord notch, midway between the floor tabs
     parts["back"] = parts["back"] - box(cord_x - 30, cord_x + 30, BACK_Y0 - 1, BACK_Y0 + T + 1, T - 1, T + 22)
     with bd.BuildSketch(bd.Plane.XZ) as vents:
-        for i, x in enumerate((PRINTER_CX - 60, PRINTER_CX, PRINTER_CX + 60)):
-            for z in (110, 165):
-                bd.add(heart(x, z + (8 if i % 2 else 0), 34))
-        for i, x in enumerate(range(40, int(W - 30), 30)):
+        for x in range(40, int(W - 30), 30):
             if abs(x - cord_x) > 42 and all(abs(x - tx) > 24 for tx in back_tabs_x):
-                bd.add(heart(x, T + 12 + (2 if i % 2 else 0), 16))
+                with bd.Locations((x, T + 14)):
+                    bd.SlotOverall(20, 8)
     parts["back"] = parts["back"] - xz_cut(vents.sketch, BACK_Y0 - 1, T + 2)
 
     # Lock bar: slides through both side walls just behind the back panel; the heart handle stops it.
@@ -132,14 +130,6 @@ def make_parts():
     for side, x0 in (("left", 0), ("right", W - T)):
         slot = box(x0 - 1, x0 + T + 1, BAR_Y0 - BAR_FIT, BAR_Y0 + T + BAR_FIT, BAR_Z0 - BAR_FIT, BAR_Z0 + BAR_H + BAR_FIT)
         parts[side] = parts[side] - slot
-
-    # Air for the closed MacBook: small hearts low in both side walls.
-    with bd.BuildSketch(bd.Plane.YZ) as side_vents:
-        for i, y in enumerate(range(40, int(BACK_Y0 - 20), 34)):
-            bd.add(heart(y, T + 10 + (2 if i % 2 else 0), 16))
-    side_cut = bd.extrude(side_vents.sketch, amount=W + 1)
-    parts["left"] = parts["left"] - side_cut
-    parts["right"] = parts["right"] - side_cut
     return parts
 
 
