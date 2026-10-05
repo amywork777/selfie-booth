@@ -39,9 +39,9 @@ LIP_T = 3.0  # front lip thickness: the bezel sits on this face
 LIP_H = 9.0  # just covers the iPad's lower bezel
 FLOOR_T = 4.0
 BACK_T = 4.0
-BACK_H = 150.0
-WALL_T = 6.0
-WALL_H = 125.0
+BACK_H = 118.0  # holds the iPad two thirds of the way up; tall enough for the top bezel pegs
+WALL_T = 5.0
+WALL_H = 118.0
 CABLE_NOTCH_W = 34.0  # USB-C is centred on the bottom edge in portrait
 POCKET_W = IPAD_W + 2 * IPAD_CLEAR
 POCKET_DEPTH = IPAD_T + 0.8  # front lip to back plate
@@ -53,7 +53,8 @@ SCREW_PILOT_D = 2.6  # self-tapping into the cradle base
 SCREW_SPACING_X = 90.0
 
 # Hanging pegs for the laser-cut panels, and the matching keyhole slots.
-PANEL_T = 3.0  # laser-cut sheet thickness
+PANEL_T = 3.0  # laser-cut sheet thickness (the pegs are sized for it)
+PRINT_PANEL_T = 2.0  # 3D-printed panels: thinner, since they only hang on the pegs
 PEG_D = 4.0
 PEG_HEAD_D = 7.0
 PEG_HEAD_T = 2.0

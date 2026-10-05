@@ -15,7 +15,7 @@ from panels import heart, keyhole, scalloped_rect, text
 
 BOTTOM = 2.0  # just above the deck, which the bezel must clear
 IPAD_TOP = FLOOR_T + IPAD_H
-BODY_HALF_W = POCKET_W / 2 + WALL_T + 8.0
+BODY_HALF_W = POCKET_W / 2 + WALL_T + 5.0
 SIGN_H = 44.0  # keeps the whole bezel under 256 mm so it also fits a Bambu plate
 SIGN_HALF_W = BODY_HALF_W - 6.0
 BUMP = 7.0

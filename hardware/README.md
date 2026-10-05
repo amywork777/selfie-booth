@@ -10,13 +10,14 @@ Everything can be 3D printed. If you have a laser cutter, the two panels can be 
 | --- | --- | --- |
 | Saddle (legs + deck over the printer) | `3MF/saddle_print.3mf`: print as loaded, deck down. No supports. | |
 | Cradle (holds the iPad, tilted back 15°) | `3MF/cradle_print.3mf`: print standing on its base. No supports. | |
-| Bezel and sign (178 x 247 mm) | `3MF/bezel_print.3mf`: flat, lettering up. | `DXF/bezel.dxf`, 3 mm sheet |
+| Bezel and sign (170 x 247 mm) | `3MF/bezel_print.3mf`: flat, lettering up. | `DXF/bezel.dxf`, 3 mm sheet |
 | Front plate (245 x 103 mm) | `3MF/front_plate_print.3mf`: flat, lettering up. | `DXF/front_plate.dxf`, 3 mm sheet |
 | Screws | 4 x M3 x 12 self-tapping, or glue | |
 
-Every part fits a 256 mm Bambu plate. PLA, 3 walls, 15% infill is plenty. The printed panels are
-3 mm thick with the lettering raised 0.8 mm: for two colours, add a filament change at the layer
-just above 3 mm in Bambu Studio. In the DXFs, the `CUT` layer cuts and `ENGRAVE` engraves.
+Every part fits a 256 mm Bambu plate. Together they are about 260 cm³ of solid model. To use even less
+filament, slice with 2 walls and 10% infill (the parts are mostly thin walls, so infill barely matters).
+The printed panels are 2 mm thick with the lettering raised 0.8 mm: for two colours, add a filament
+change at the layer just above 2 mm in Bambu Studio. In the DXFs, the `CUT` layer cuts and `ENGRAVE` engraves.
 
 ## Putting it together
 
@@ -41,7 +42,8 @@ All sizes live in `src/dims.py`. Change a number there and rerun the scripts to 
 - **Label exit:** not published. The deck starts 25 mm behind the printer's front edge and the front
   plate's slot runs from 24 mm below the printer top to 4 mm above it, so a label can leave through
   the front or over the top-front edge.
-- **Panels:** 3 mm sheet. For other thicknesses change `PANEL_T` (the pegs follow).
+- **Panels:** laser cut from 3 mm sheet (`PANEL_T`, the pegs follow it), or printed 2 mm thick
+  (`PRINT_PANEL_T`).
 
 ## Rebuilding
 

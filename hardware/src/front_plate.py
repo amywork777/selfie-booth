@@ -36,8 +36,8 @@ def front_plate_sketches():
     for sx in (-1, 1):
         for z in FRONT_PEG_Z:
             cut -= keyhole(sx * FRONT_PEG_X, z)
-    for i, x in enumerate((-60, -30, 0, 30, 60)):
-        cut -= heart(x, 18, 14 if i % 2 else 18)
+    for i, x in enumerate((-62, -31, 0, 31, 62)):
+        cut -= heart(x, 20, 20 if i % 2 else 25)
 
     lettering = text("your print comes out here", 0, SLOT_Z0 - 13, 15)
     return cut, lettering

@@ -41,10 +41,10 @@ def make_saddle():
 
     # Save filament: a heart through each leg, and windows in the deck around the screw bosses.
     with bd.BuildSketch(bd.Plane.YZ) as leg_heart:
-        bd.add(heart((LEG_Y0 + LEG_Y1) / 2, DECK_Z0 * 0.47, 64))
+        bd.add(heart((LEG_Y0 + LEG_Y1) / 2, DECK_Z0 * 0.47, 78))
     body -= bd.extrude(leg_heart.sketch, amount=OUTER_HALF + 1, both=True)
-    boss = 9.0  # material kept around each screw hole
-    rim = 8.0  # solid border round the deck
+    boss = 7.0  # material kept around each screw hole
+    rim = 6.0  # solid border round the deck
     windows = [
         (-SCREW_SPACING_X / 2 + boss, SCREW_SPACING_X / 2 - boss),  # between the screws
         (SCREW_SPACING_X / 2 + boss, INNER_HALF - rim),  # outside them, each side
