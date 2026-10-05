@@ -310,10 +310,11 @@ function sketchRect(ctx, s, k) {
 
 /** Add a heart, as big as fits centred in the slot, to the current path. */
 function heartWindow(ctx, s) {
-  const w = Math.min(s.w, s.h * 1.08) * 0.98
-  const h = w * 0.92
+  // Taller than wide, so a face and shoulders fit in the point.
+  const w = Math.min(s.w, s.h / 1.2) * 0.98
+  const h = w * 1.2
   const x = s.x + (s.w - w) / 2, y = s.y + (s.h - h) / 2
-  const top = h * 0.3
+  const top = h * 0.26
   ctx.moveTo(x + w / 2, y + top)
   ctx.bezierCurveTo(x + w / 2, y, x, y, x, y + top)
   ctx.bezierCurveTo(x, y + (h + top) / 2, x + w / 2, y + (h + top) / 2, x + w / 2, y + h)
