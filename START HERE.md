@@ -21,20 +21,21 @@ The Mac and iPad must be on the same Wi-Fi.
 
 ### On the iPad (once per iPad)
 
-1. In Safari, go to **http://selfie-booth.local:8000**
+1. When the booth starts, the Mac shows a page with a big QR code. Point the iPad camera at it and tap
+   the link that pops up.
 2. Tap **Download the booth certificate**, then **Allow**.
 3. Open **Settings**. Tap **Profile Downloaded** near the top, then **Install** (enter the iPad
    passcode if asked).
 4. In Settings, go to **General**, **About**, **Certificate Trust Settings**, and turn on
    **Selfie Booth**.
-5. Back in Safari, tap **Open the booth**. Allow the camera.
+5. Scan the QR code again (or go back to Safari and tap **Open the booth**). Allow the camera.
 6. Tap the Share button, then **Add to Home Screen**.
 
 ## Every time after that
 
 1. Plug the printer into the Mac and switch it on.
 2. Double-click **Start Booth** on the Mac. Leave the window open.
-3. On the iPad, tap the **Selfie booth** icon on the Home Screen.
+3. On the iPad, tap the **Selfie booth** icon on the Home Screen (or scan the QR code on the Mac).
 
 To stop the booth, close the Start Booth window on the Mac.
 
@@ -52,6 +53,7 @@ Tip: turn on **Guided Access** (iPad Settings, Accessibility) so guests can't le
 
 - **The iPad can't find selfie-booth.local:** check the Mac and iPad are on the same Wi-Fi and the
   Start Booth window is still open. The window also shows another address to try.
-- **"Printer not found" in the booth:** check the printer is plugged in and switched on.
+- **"Printer not found"** (on the Mac's QR page or in the booth): check the printer is plugged in and
+  switched on.
 - **The Mac asks to allow incoming connections:** click **Allow**.
 - **Nothing prints:** check the labels are loaded, then close Start Booth and open it again.

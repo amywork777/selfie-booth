@@ -114,6 +114,8 @@ class Booth(BaseHTTPRequestHandler):
         self.send_header("Content-Type", kind)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        # The http setup page probes /status to see whether this iPad already trusts the booth.
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
 
@@ -151,49 +153,109 @@ class Booth(BaseHTTPRequestHandler):
             self.reply(500, json.dumps({"error": "print failed"}).encode())
 
 
+PAGE_STYLE = """
+  body { margin: 0; padding: 40px 28px; background: #fff3b0; color: #3a2a47;
+         font: 500 20px/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  main { max-width: 620px; margin: 0 auto; }
+  h1 { font-size: 40px; margin: 0 0 8px; }
+  ol { padding-left: 24px; } li { margin: 12px 0; }
+  a.btn { display: inline-block; margin: 8px 0 24px; padding: 20px 32px; border: 3px solid #3a2a47;
+          border-radius: 22px; background: #ff6fa3; color: #3a2a47; font-weight: 700; text-decoration: none;
+          box-shadow: 0 6px 0 #3a2a47; }
+  a.ghost { background: #fff8d6; }
+  code { font-size: 18px; }
+  [hidden] { display: none !important; }
+"""
+
+# The iPad lands here from the QR code. If it already trusts the booth it goes straight in;
+# otherwise it shows the one-time steps.
 SETUP_PAGE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Set up the selfie booth</title>
-<style>
-  body {{ margin: 0; padding: 40px 28px; background: #fff3b0; color: #3a2a47;
-         font: 500 20px/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif; }}
-  main {{ max-width: 620px; margin: 0 auto; }}
-  h1 {{ font-size: 40px; margin: 0 0 8px; }}
-  ol {{ padding-left: 24px; }} li {{ margin: 12px 0; }}
-  a.btn {{ display: inline-block; margin: 8px 0 24px; padding: 20px 32px; border: 3px solid #3a2a47;
-          border-radius: 22px; background: #ff6fa3; color: #3a2a47; font-weight: 700; text-decoration: none;
-          box-shadow: 0 6px 0 #3a2a47; }}
-  a.ghost {{ background: #fff8d6; }}
-  code {{ font-size: 18px; }}
-</style></head><body><main>
+<title>Selfie booth</title>
+<style>__STYLE__</style></head><body><main>
 <h1>Selfie booth</h1>
-<a class="btn" href="https://{name}:{port}/">Open the booth</a>
-<h2>First time on this iPad?</h2>
-<p>Do this once so the booth opens without a warning, on any Wi-Fi.</p>
-<ol>
-  <li><a class="btn ghost" href="/booth-ca.crt">Download the booth certificate</a><br>Tap Allow.</li>
-  <li>Open Settings, tap <b>Profile Downloaded</b> near the top, then Install.</li>
-  <li>In Settings, go to General, About, Certificate Trust Settings, and turn on <b>Selfie Booth</b>.</li>
-  <li>Come back here and tap Open the booth. Then Share, Add to Home Screen, for one-tap opening.</li>
-</ol>
-<p>Booth address: <code>https://{name}:{port}</code></p>
+<p id="checking">Opening the booth...</p>
+<div id="steps" hidden>
+  <h2>First time on this iPad</h2>
+  <p>Do this once and the booth opens with no warning, on any Wi-Fi.</p>
+  <ol>
+    <li><a class="btn ghost" href="/booth-ca.crt">Download the booth certificate</a><br>Tap Allow.</li>
+    <li>Open Settings, tap <b>Profile Downloaded</b> near the top, then Install.</li>
+    <li>In Settings, go to General, About, Certificate Trust Settings, and turn on <b>Selfie Booth</b>.</li>
+    <li>Come back here and tap Open the booth. Then Share, Add to Home Screen, for one-tap opening.</li>
+  </ol>
+  <a class="btn" href="__BOOTH__">Open the booth</a>
+</div>
+<script>
+  // If this iPad already trusts the booth's certificate, the https check works: go straight in.
+  const booth = "__BOOTH__"
+  const done = new AbortController()
+  setTimeout(() => done.abort(), 2500)
+  fetch(booth + "status", { cache: "no-store", signal: done.signal })
+    .then((r) => { if (!r.ok) throw r; location.replace(booth) })
+    .catch(() => { document.getElementById("checking").hidden = true; document.getElementById("steps").hidden = false })
+</script>
+</main></body></html>"""
+
+# Opens on the Mac when the booth starts: a QR code for the iPad, and whether the printer is there.
+HOST_PAGE = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selfie booth is running</title>
+<style>__STYLE__
+  main { text-align: center; }
+  .qr { width: min(70vh, 420px); background: #fff; padding: 18px; border: 3px solid #3a2a47;
+        border-radius: 22px; box-shadow: 6px 6px 0 #3a2a47; }
+  .qr svg { display: block; width: 100%; height: auto; }
+  .status { font-size: 26px; font-weight: 700; margin: 28px 0 8px; }
+  .bad { color: #d6447e; }
+</style></head><body><main>
+<h1>Selfie booth is running</h1>
+<p>Point the iPad camera at this code and tap the link.</p>
+<div class="qr" style="margin: 0 auto">__QR__</div>
+<p><code>__SETUP__</code></p>
+<p class="status" id="printer">Checking the printer...</p>
+<p>Keep the Start Booth window open while the booth runs.</p>
+<script>
+  async function check() {
+    const el = document.getElementById("printer")
+    try {
+      const { printer } = await (await fetch("/status", { cache: "no-store" })).json()
+      el.textContent = printer ? "Printer connected" : "Printer not found: plug it in and switch it on"
+      el.className = printer ? "status" : "status bad"
+    } catch { el.textContent = "The booth has stopped. Double-click Start Booth again."; el.className = "status bad" }
+  }
+  check(); setInterval(check, 3000)
+</script>
 </main></body></html>"""
 
 
-class Setup(BaseHTTPRequestHandler):
-    """Plain http: the setup page and the authority certificate. Everything else lives on https."""
+def qr_svg(text):
+    import qrcode
+    import qrcode.image.svg
 
-    name = "localhost"
+    out = io.BytesIO()
+    qrcode.make(text, image_factory=qrcode.image.svg.SvgPathImage, border=1).save(out)
+    return out.getvalue().decode().split("?>", 1)[-1]  # drop the XML header so it inlines in HTML
+
+
+class Setup(BaseHTTPRequestHandler):
+    """Plain http: the iPad setup page, the Mac's QR page, and the authority certificate."""
+
+    pages = {}
 
     def log_message(self, *args):
         pass
 
     def do_GET(self):
-        if self.path == "/booth-ca.crt":
+        path = self.path.split("?")[0]
+        if path == "/booth-ca.crt":
             body, kind = CA_CERT.read_bytes(), "application/x-x509-ca-cert"
+        elif path == "/status":
+            body, kind = json.dumps({"printer": printer.connected()}).encode(), "application/json"
         else:
-            body, kind = SETUP_PAGE.format(name=self.name, port=HTTPS_PORT).encode(), "text/html; charset=utf-8"
+            body, kind = self.pages["host" if path == "/host" else "setup"], "text/html; charset=utf-8"
         self.send_response(200)
         self.send_header("Content-Type", kind)
         self.send_header("Content-Length", str(len(body)))
@@ -214,9 +276,16 @@ def main():
 
     https = ThreadingHTTPServer(("0.0.0.0", HTTPS_PORT), Booth)
     https.socket = ctx.wrap_socket(https.socket, server_side=True)
-    Setup.name = name
+    booth_url, setup_url = f"https://{name}:{HTTPS_PORT}/", f"http://{name}:{HTTP_PORT}/"
+    fill = lambda page: page.replace("__STYLE__", PAGE_STYLE).replace("__BOOTH__", booth_url)
+    Setup.pages = {
+        "setup": fill(SETUP_PAGE).encode(),
+        "host": fill(HOST_PAGE).replace("__QR__", qr_svg(setup_url)).replace("__SETUP__", setup_url).encode(),
+    }
     http = ThreadingHTTPServer(("0.0.0.0", HTTP_PORT), Setup)
     threading.Thread(target=http.serve_forever, daemon=True).start()
+    if "--open" in sys.argv and sys.platform == "darwin":
+        subprocess.run(["open", f"http://localhost:{HTTP_PORT}/host"])  # the QR page, on the Mac's screen
 
     print(f"Selfie booth ready at https://{name}:{HTTPS_PORT}")
     print(f"First time on an iPad? Open http://{name}:{HTTP_PORT} for the one-time setup.")

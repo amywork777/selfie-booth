@@ -19,7 +19,7 @@ if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2
   exit 1
 fi
 
-if [ ! -x .venv/bin/python ] || ! .venv/bin/python -c 'import usb, PIL, libusb_package' 2>/dev/null; then
+if [ ! -x .venv/bin/python ] || ! .venv/bin/python -c 'import usb, PIL, libusb_package, qrcode' 2>/dev/null; then
   echo
   echo "Setting up for the first time. This needs Wi-Fi and takes a minute or two..."
   rm -rf .venv
@@ -33,8 +33,9 @@ if [ ! -x .venv/bin/python ] || ! .venv/bin/python -c 'import usb, PIL, libusb_p
 fi
 
 echo
+echo "A page with a QR code will open: scan it with the iPad camera."
 echo "Keep this window open while the booth is running. Close it to stop the booth."
 echo
 # caffeinate keeps the Mac awake for as long as the booth runs.
-caffeinate -i .venv/bin/python -u server.py
+caffeinate -i .venv/bin/python -u server.py --open
 pause
