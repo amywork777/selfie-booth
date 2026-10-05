@@ -22,6 +22,103 @@ function twinSlots() {
   return slots
 }
 
+/** A white rounded card in the middle of a patterned label, holding one photo and the caption. */
+const panel = () => ({
+  slots: [rect(100, 100, 608, 780)],
+  bands: [{ x: 100, y: 890, w: 608, h: 236 }],
+  stroke: 8,
+})
+function panelCard(ctx) {
+  ctx.fillStyle = '#fff'
+  roundRect(ctx, 76, 76, 656, 1066, 30)
+  ctx.lineWidth = 8
+  ctx.strokeStyle = '#000'
+  ctx.stroke()
+}
+
+/** A 50% dot pattern that prints as a light grey. */
+function halftone(ctx) {
+  const tile = document.createElement('canvas')
+  tile.width = tile.height = 4
+  const t = tile.getContext('2d')
+  t.fillStyle = '#000'
+  t.fillRect(0, 0, 2, 2)
+  t.fillRect(2, 2, 2, 2)
+  return ctx.createPattern(tile, 'repeat')
+}
+
+/** Shapes all the way round the label edge, alternating size and tilt. */
+function chain(ctx, shape) {
+  const inset = 46, step = 66
+  const pts = []
+  for (let x = inset; x < W - inset; x += step) pts.push([x, inset], [x + step / 2, H - inset])
+  for (let y = inset + step; y < H - inset; y += step) pts.push([inset, y], [W - inset, y])
+  pts.forEach(([x, y], i) => {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(i % 2 ? 0.25 : -0.25)
+    shape(ctx, i % 3 ? 24 : 30)
+    ctx.restore()
+  })
+}
+
+/**
+ * Black lace round the whole label: scalloped outside edge, scalloped inside edge biting into the
+ * photo, a row of punched eyelets down the middle and a pinhole in every outer scallop.
+ */
+function lace(ctx) {
+  const outer = { x: 34, y: 34, w: W - 68, h: H - 68 }
+  const inner = { x: 112, y: 112, w: W - 224, h: H - 224 }
+  ctx.beginPath()
+  scallops(ctx, outer, 22, false)
+  scallops(ctx, inner, 18, true)
+  ctx.fillStyle = '#000'
+  ctx.fill('evenodd')
+  ctx.fillStyle = '#fff'
+  // Eyelets along the middle of the lace band.
+  const mid = { x: 73, y: 73, w: W - 146, h: H - 146 }
+  const eyelets = (len) => Math.round(len / 40)
+  for (const [x0, y0, dx, dy, n] of [
+    [mid.x, mid.y, mid.w, 0, eyelets(mid.w)], [mid.x + mid.w, mid.y, 0, mid.h, eyelets(mid.h)],
+    [mid.x + mid.w, mid.y + mid.h, -mid.w, 0, eyelets(mid.w)], [mid.x, mid.y + mid.h, 0, -mid.h, eyelets(mid.h)],
+  ]) {
+    for (let i = 0; i < n; i++) {
+      ctx.beginPath()
+      ctx.ellipse(x0 + (dx * i) / n, y0 + (dy * i) / n, 9, 9, 0, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+  // Pinholes in the outer scallops.
+  ctx.beginPath()
+  scallopCentres(outer, 22).forEach(([x, y]) => { ctx.moveTo(x + 5, y); ctx.arc(x, y, 5, 0, Math.PI * 2) })
+  ctx.fill()
+  // A thin ring just inside the lace finishes the photo edge.
+  ctx.lineWidth = 6
+  ctx.strokeStyle = '#000'
+  ctx.strokeRect(inner.x + 26, inner.y + 26, inner.w - 52, inner.h - 52)
+}
+
+/** Half-circle scallops along every side of `r`: bumps outward, or bites inward when `inward`. */
+function scallops(ctx, b, r, inward) {
+  const nx = Math.round(b.w / (r * 2)), ny = Math.round(b.h / (r * 2))
+  const sx = b.w / nx, sy = b.h / ny
+  ctx.moveTo(b.x, b.y)
+  for (let i = 0; i < nx; i++) ctx.arc(b.x + sx * (i + 0.5), b.y, sx / 2, Math.PI, 0, inward)
+  for (let i = 0; i < ny; i++) ctx.arc(b.x + b.w, b.y + sy * (i + 0.5), sy / 2, -Math.PI / 2, Math.PI / 2, inward)
+  for (let i = nx - 1; i >= 0; i--) ctx.arc(b.x + sx * (i + 0.5), b.y + b.h, sx / 2, 0, Math.PI, inward)
+  for (let i = ny - 1; i >= 0; i--) ctx.arc(b.x, b.y + sy * (i + 0.5), sy / 2, Math.PI / 2, -Math.PI / 2, inward)
+  ctx.closePath()
+}
+
+function scallopCentres(b, r) {
+  const nx = Math.round(b.w / (r * 2)), ny = Math.round(b.h / (r * 2))
+  const sx = b.w / nx, sy = b.h / ny
+  const pts = []
+  for (let i = 0; i < nx; i++) pts.push([b.x + sx * (i + 0.5), b.y - sx * 0.22], [b.x + sx * (i + 0.5), b.y + b.h + sx * 0.22])
+  for (let i = 0; i < ny; i++) pts.push([b.x - sy * 0.22, b.y + sy * (i + 0.5)], [b.x + b.w + sy * 0.22, b.y + sy * (i + 0.5)])
+  return pts
+}
+
 export const LAYOUTS = {
   grid: {
     name: '2 x 2',
@@ -51,20 +148,52 @@ export const LAYOUTS = {
     slots: [rect(92, 92, 624, 820)],
     bands: [{ x: 60, y: 930, w: 688, h: 230 }],
     stroke: 10,
-    art(ctx) {
-      // A chain of hearts all the way round the label, alternating size and tilt.
-      const inset = 46, step = 66
-      const pts = []
-      for (let x = inset; x < W - inset; x += step) pts.push([x, inset], [x + step / 2, H - inset])
-      for (let y = inset + step; y < H - inset; y += step) pts.push([inset, y], [W - inset, y])
-      pts.forEach(([x, y], i) => {
-        ctx.save()
-        ctx.translate(x, y)
-        ctx.rotate(i % 2 ? 0.25 : -0.25)
-        heart(ctx, i % 3 ? 24 : 30)
-        ctx.restore()
-      })
+    art: (ctx) => chain(ctx, heart),
+  },
+  polka: {
+    name: 'Polka dot',
+    ...panel(),
+    under(ctx) {
+      // Staggered dots over the whole label; the white panel then covers the middle.
+      ctx.fillStyle = '#000'
+      for (let row = 0, y = 0; y < H + 48; row++, y += 42) {
+        for (let x = row % 2 ? 24 : 0; x < W + 48; x += 48) {
+          ctx.beginPath()
+          ctx.arc(x, y, 12, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+      panelCard(ctx)
     },
+  },
+  lace: {
+    name: 'Lace',
+    slots: [rect(112, 112, 584, 780)],
+    bands: [{ x: 112, y: 900, w: 584, h: 206 }],
+    stroke: 8,
+    art: lace,
+  },
+  gingham: {
+    name: 'Gingham',
+    ...panel(),
+    under(ctx) {
+      // Picnic check: stripes are a fine dot pattern (they print grey), crossings are solid black.
+      const tone = halftone(ctx)
+      const band = 40, step = 80
+      ctx.fillStyle = tone
+      for (let y = 0; y < H; y += step) ctx.fillRect(0, y, W, band)
+      for (let x = 0; x < W; x += step) ctx.fillRect(x, 0, band, H)
+      ctx.fillStyle = '#000'
+      for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) ctx.fillRect(x, y, band, band)
+      panelCard(ctx)
+    },
+  },
+  daisy: {
+    name: 'Daisy chain',
+    slots: [rect(92, 92, 624, 820)],
+    bands: [{ x: 60, y: 930, w: 688, h: 230 }],
+    stroke: 10,
+    art: (ctx) => chain(ctx, flower),
   },
   classic: {
     name: 'Classic',
@@ -344,23 +473,12 @@ function windowPath(ctx, s) {
   if (s.shape === 'oval') {
     ctx.ellipse(s.x + s.w / 2, s.y + s.h / 2, s.w / 2, s.h / 2, 0, 0, Math.PI * 2)
   } else if (s.shape === 'stamp') {
-    stampPath(ctx, s.x, s.y, s.w, s.h, 30)
+    scallops(ctx, s, 30, true)
   } else {
     ctx.rect(s.x, s.y, s.w, s.h)
   }
 }
 
-/** A postage-stamp edge: half-circle bites of about radius `r` along every side. */
-function stampPath(ctx, x, y, w, h, r) {
-  const nx = Math.round(w / (r * 2)), ny = Math.round(h / (r * 2))
-  const sx = w / nx, sy = h / ny
-  ctx.moveTo(x, y)
-  for (let i = 0; i < nx; i++) ctx.arc(x + sx * (i + 0.5), y, sx / 2, Math.PI, 0, true)
-  for (let i = 0; i < ny; i++) ctx.arc(x + w, y + sy * (i + 0.5), sy / 2, -Math.PI / 2, Math.PI / 2, true)
-  for (let i = nx - 1; i >= 0; i--) ctx.arc(x + sx * (i + 0.5), y + h, sx / 2, 0, Math.PI, true)
-  for (let i = ny - 1; i >= 0; i--) ctx.arc(x, y + sy * (i + 0.5), sy / 2, Math.PI / 2, -Math.PI / 2, true)
-  ctx.closePath()
-}
 
 function sourceSize(src) {
   return [src.videoWidth || src.naturalWidth || src.width, src.videoHeight || src.naturalHeight || src.height]
@@ -432,6 +550,7 @@ export function render(canvas, shots, { layout = 'classic', stickers = 'none', c
   ctx.setTransform(scale, 0, 0, scale, 0, 0)
   ctx.fillStyle = paper
   ctx.fillRect(0, 0, W, H)
+  L.under?.(ctx)
 
   for (const s of L.slots) {
     const src = shots[s.shot]
