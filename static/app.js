@@ -39,7 +39,13 @@ function message(text) {
 
 // ---- Camera ------------------------------------------------------------------------------------
 
+function stopCamera() {
+  video.srcObject?.getTracks().forEach((track) => track.stop())
+  video.srcObject = null
+}
+
 async function startCamera() {
+  if (video.srcObject) return
   if (!navigator.mediaDevices?.getUserMedia) {
     message('The camera needs the secure address. Open this page through the link the Mac printed.')
     return
@@ -68,7 +74,7 @@ let lastTiles = 0
 function loop(now) {
   requestAnimationFrame(loop)
   if (state === 'count' || state === 'pattern') {
-    if (now - lastTiles > 400) { // tiles refresh a couple of times a second: enough to see yourself
+    if (!lastTiles) { // tiles only change when the step or a setting does
       lastTiles = now
       renderTiles()
     }
@@ -88,11 +94,12 @@ function renderTiles() {
   const step = state // 'count' or 'pattern': the tiles vary that one setting
   for (const tile of $(`${step}-tiles`).children) {
     const opts = { ...settings, [step]: tile.dataset.key, scale: TILE_SCALE }
-    render(tile.firstChild, video.videoWidth ? Array(shotCount(opts.count)).fill(video) : [], opts)
+    render(tile.firstChild, [], opts) // camera is off here: slots show their pose numbers
   }
 }
 
 function rerender() {
+  lastTiles = 0 // caption or date changed: redraw the tiles too
   if (state === 'review' || state === 'printing') render(canvas, shots, { ...settings, scale: 1 })
 }
 
@@ -200,6 +207,7 @@ const STEP_TITLES = {
   pattern: ['Step 2 of 3', 'Pick a pattern'],
 }
 function showStep(step) {
+  stopCamera() // the camera only runs on the photo step
   setState(step)
   const [num, title] = STEP_TITLES[step]
   $('pick-title').innerHTML = `<span class="step-num">${num}</span>${title}`
@@ -228,6 +236,7 @@ function next() {
   if (state === 'count') return showStep('pattern')
   log(`chosen: ${settings.count}, ${settings.pattern}`)
   setState('live')
+  startCamera()
   idle()
 }
 
@@ -351,5 +360,4 @@ await Promise.all([
   document.fonts.load('900 40px Doto'),
   document.fonts.load('700 80px Caveat'),
 ]).catch(() => {})
-startCamera()
 requestAnimationFrame(loop)
