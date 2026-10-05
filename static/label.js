@@ -76,23 +76,32 @@ export const PATTERNS = {
   },
   polka: {
     name: 'Polka dot',
-    stickers: 'bows',
+    stickers: 'none',
     inset: inset(100),
     stroke: 8,
     under(ctx, p) {
-      // Staggered dots over the whole panel; a white card then covers the middle.
+      // Soft dots: big grey ones and small black ones in staggered rows, then a scalloped card.
       const { frame: f, k } = p
+      const grey = halftone(ctx, 'mid')
       clipTo(ctx, f, () => {
-        ctx.fillStyle = '#000'
-        for (let row = 0, y = f.y; y < f.y + f.h + 48; row++, y += 42 * k) {
-          for (let x = f.x + (row % 2 ? 24 * k : 0); x < f.x + f.w + 48; x += 48 * k) {
+        for (let row = 0, y = f.y + 10 * k; y < f.y + f.h + 60; row++, y += 50 * k) {
+          for (let col = 0, x = f.x + (row % 2 ? 30 * k : 0); x < f.x + f.w + 60; col++, x += 60 * k) {
+            const big = (row + col) % 2 === 0
             ctx.beginPath()
-            ctx.arc(x, y, 12 * k, 0, Math.PI * 2)
+            ctx.arc(x, y, (big ? 15 : 7) * k, 0, Math.PI * 2)
+            ctx.fillStyle = big ? grey : '#000'
             ctx.fill()
           }
         }
       })
-      card(ctx, p)
+      scallopCard(ctx, p)
+    },
+    art(ctx, p) {
+      // One big bow tied at the top of the card.
+      ctx.save()
+      ctx.translate(p.frame.x + p.frame.w / 2, p.box.y - 30 * p.k)
+      bow(ctx, 62 * p.k)
+      ctx.restore()
     },
   },
   gingham: {
@@ -187,6 +196,28 @@ function clipTo(ctx, r, draw) {
   ctx.clip()
   draw()
   ctx.restore()
+}
+
+/** A white card just outside the content box with a scalloped edge, like a cookie cutter. */
+function scallopCard(ctx, p) {
+  const b = p.box, m = 26 * p.k, r = 20 * p.k
+  const c = { x: b.x - m, y: b.y - m, w: b.w + m * 2, h: b.h + m * 2 }
+  const bumps = []
+  const along = (x0, y0, x1, y1) => {
+    const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / (r * 1.7)))
+    for (let i = 0; i < n; i++) bumps.push([x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n])
+  }
+  along(c.x, c.y, c.x + c.w, c.y)
+  along(c.x + c.w, c.y, c.x + c.w, c.y + c.h)
+  along(c.x + c.w, c.y + c.h, c.x, c.y + c.h)
+  along(c.x, c.y + c.h, c.x, c.y)
+  // Outline every bump, then fill them and the card white so only the outer scallop line shows.
+  ctx.lineWidth = 6 * p.k
+  ctx.strokeStyle = '#000'
+  for (const [x, y] of bumps) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke() }
+  ctx.fillStyle = '#fff'
+  for (const [x, y] of bumps) { ctx.beginPath(); ctx.arc(x, y, r - 3 * p.k, 0, Math.PI * 2); ctx.fill() }
+  ctx.fillRect(c.x, c.y, c.w, c.h)
 }
 
 /** A white rounded card just outside the content box, so a pattern frames the photos. */
