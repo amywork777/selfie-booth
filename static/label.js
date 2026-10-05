@@ -309,10 +309,10 @@ function sketchRect(ctx, s, k) {
   pen(ctx, pts.map(([x, y]) => [x + 5 * k, y + 4 * k]), rand, 9 * k, true)
 }
 
-/** The heart's box: as big as fits in the slot, a little taller than wide. */
+/** The heart's box: as big as fits in the slot, a touch wider than tall. */
 function heartBox(s) {
-  const w = Math.min(s.w, s.h / 1.12)
-  const h = w * 1.12
+  const w = Math.min(s.w, s.h / 0.95)
+  const h = w * 0.95
   return { x: s.x + (s.w - w) / 2, y: s.y + (s.h - h) / 2, w, h }
 }
 
