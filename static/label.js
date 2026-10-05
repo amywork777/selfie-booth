@@ -57,7 +57,14 @@ const GUTTER = 28
 
 export const PATTERNS = {
   plain: { name: 'Plain', stickers: 'none', inset: inset(36), stroke: 12 },
-  hearts: { name: 'Hearts', stickers: 'hearts', inset: inset(92), stroke: 10, art: (ctx, p) => chain(ctx, heart, p) },
+  hearts: {
+    name: 'Hearts',
+    stickers: 'hearts',
+    inset: inset(92),
+    // Each photo is outlined with a row of small hearts instead of a plain line.
+    outline: (ctx, s, k) => heartLine(ctx, s, k),
+    art: (ctx, p) => chain(ctx, heart, p),
+  },
   polka: {
     name: 'Polka dot',
     stickers: 'bows',
@@ -98,7 +105,7 @@ export const PATTERNS = {
       card(ctx, p)
     },
   },
-  daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx, p) => chain(ctx, flower, p) },
+  daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx, p) => chain(ctx, daisy, p) },
 }
 
 /**
@@ -120,7 +127,7 @@ export function layout(count, pattern) {
   return {
     ...P,
     panels,
-    stroke: P.stroke * (C.halves ? 0.75 : 1),
+    stroke: (P.stroke ?? 0) * (C.halves ? 0.75 : 1),
     slots: panels.flatMap((p) => p.slots),
     bands: panels.flatMap((p) => p.bands),
     cut: Boolean(C.halves),
@@ -185,6 +192,42 @@ function halftone(ctx) {
   t.fillRect(0, 0, 2, 2)
   t.fillRect(2, 2, 2, 2)
   return ctx.createPattern(tile, 'repeat')
+}
+
+/** Small hearts spaced evenly round a photo's edge. */
+function heartLine(ctx, s, k) {
+  const size = 11 * k, step = 30 * k
+  const edge = (x0, y0, x1, y1) => {
+    const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / step))
+    for (let i = 0; i < n; i++) {
+      ctx.save()
+      ctx.translate(x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n)
+      heart(ctx, size, 4 * k)
+      ctx.restore()
+    }
+  }
+  edge(s.x, s.y, s.x + s.w, s.y)
+  edge(s.x + s.w, s.y, s.x + s.w, s.y + s.h)
+  edge(s.x + s.w, s.y + s.h, s.x, s.y + s.h)
+  edge(s.x, s.y + s.h, s.x, s.y)
+}
+
+/** A daisy: white petals outlined in black round a solid centre, unlike the solid flower sticker. */
+function daisy(ctx, r) {
+  ctx.lineWidth = Math.max(2, r * 0.12)
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2
+    ctx.beginPath()
+    ctx.ellipse(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, r * 0.45, r * 0.2, a, 0, Math.PI * 2)
+    ctx.fillStyle = '#fff'
+    ctx.fill()
+    ctx.strokeStyle = '#000'
+    ctx.stroke()
+  }
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2)
+  ctx.fillStyle = '#000'
+  ctx.fill()
 }
 
 /** Shapes all the way round the panel edge, alternating size and tilt. */
@@ -265,13 +308,13 @@ function dieCut(ctx, edge = 10) {
   ctx.fill()
 }
 
-function heart(ctx, r) {
+function heart(ctx, r, edge = 10) {
   ctx.beginPath()
   ctx.moveTo(0, r * 0.9)
   ctx.bezierCurveTo(-r * 1.4, -r * 0.1, -r * 0.7, -r * 1.2, 0, -r * 0.45)
   ctx.bezierCurveTo(r * 0.7, -r * 1.2, r * 1.4, -r * 0.1, 0, r * 0.9)
   ctx.closePath()
-  dieCut(ctx)
+  dieCut(ctx, edge)
 }
 
 function flower(ctx, r) {
@@ -393,7 +436,12 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
     const src = shots[s.shot]
     if (src) drawPhoto(ctx, src, s, scale)
     else drawWaiting(ctx, s, s.shot + 1, ink)
-    if (L.stroke) {
+  }
+  // Outlines after every photo is down, so a heart outline isn't covered by the next photo.
+  for (const s of L.slots) {
+    if (L.outline) {
+      L.outline(ctx, s, L.panels[0].k)
+    } else if (L.stroke) {
       ctx.beginPath()
       ctx.rect(s.x, s.y, s.w, s.h)
       ctx.lineWidth = L.stroke
