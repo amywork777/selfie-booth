@@ -1,5 +1,5 @@
 // Selfie booth: live camera shown as printer dots, a 3-2-1 countdown per pose, review, print.
-import { COUNTS, PATTERNS, STICKERS, render, shotCount } from './label.js'
+import { COUNTS, PATTERNS, render, shotCount } from './label.js'
 
 const $ = (id) => document.getElementById(id)
 
@@ -17,7 +17,6 @@ const saved = (key, options, fallback) => (options[localStorage.getItem(key)] ? 
 const settings = {
   count: saved('booth:count', COUNTS, 'one'),
   pattern: saved('booth:pattern', PATTERNS, 'plain'),
-  stickers: saved('booth:stickers', STICKERS, 'none'),
   caption: localStorage.getItem('booth:caption') ?? '',
   showDate: localStorage.getItem('booth:date') !== 'false',
   sound: localStorage.getItem('booth:sound') !== 'false',
@@ -250,26 +249,6 @@ async function print() {
 
 // ---- Controls ----------------------------------------------------------------------------------
 
-/** A row of radio buttons for one setting (the sticker pack). */
-function buildChoices(boxId, options, setting) {
-  const box = $(boxId)
-  for (const [key, o] of Object.entries(options)) {
-    const b = document.createElement('button')
-    b.type = 'button'
-    b.className = 'choice'
-    b.role = 'radio'
-    b.textContent = o.name
-    b.dataset.key = key
-    b.onclick = () => {
-      settings[setting] = key
-      localStorage.setItem(`booth:${setting}`, key)
-      syncControls()
-      rerender()
-    }
-    box.append(b)
-  }
-}
-
 /** Big tappable tiles for one step, each a live preview of the label with that choice. */
 function buildTiles(step, options) {
   for (const [key, o] of Object.entries(options)) {
@@ -293,7 +272,6 @@ function buildTiles(step, options) {
 }
 
 function syncControls() {
-  for (const b of $('stickers').children) b.setAttribute('aria-checked', String(b.dataset.key === settings.stickers))
   $('date').setAttribute('aria-pressed', String(settings.showDate))
   $('sound').setAttribute('aria-pressed', String(settings.sound))
 }
@@ -340,7 +318,6 @@ async function pollStatus() {
 
 buildTiles('count', COUNTS)
 buildTiles('pattern', PATTERNS)
-buildChoices('stickers', STICKERS, 'stickers')
 syncControls()
 pollStatus()
 setInterval(pollStatus, 5000)

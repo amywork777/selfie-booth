@@ -1,9 +1,9 @@
 // The printed label: 808 x 1218 dots (4 x 6 inches at 203 dpi). Frames are bold black shapes and
 // solid fills, because thin lines and greys print badly on thermal paper.
 //
-// A label is a photo COUNT (how many poses and how they're arranged), a PATTERN (the border round
-// them) and a STICKER pack (decorations on top). All three mix freely: patterns only set the space
-// the photos fill, and stickers are placed relative to wherever the photos ended up.
+// A label is a photo COUNT (how many poses and how they're arranged) and a PATTERN (the border round
+// them, with its matching stickers). They mix freely: a pattern only sets the space the photos fill,
+// and its stickers are placed relative to wherever the photos ended up.
 import { dither, levels, paint, toGray } from './dots.js'
 
 export const W = 808
@@ -57,14 +57,14 @@ export const COUNTS = {
 
 // ---- Patterns -------------------------------------------------------------------------------------
 // A pattern is the border: how far in the photos start (inset), what is drawn under them (under) and
-// over them (art), the window shape and the line round each photo.
+// over them (art), the window shape, the line round each photo, and the sticker pack that comes with it.
 
 const inset = (t, r = t, b = t, l = r) => ({ t, r, b, l })
 
 export const PATTERNS = {
-  plain: { name: 'Plain', inset: inset(36), stroke: 12 },
-  hearts: { name: 'Hearts', inset: inset(92), stroke: 10, art: (ctx) => chain(ctx, heart) },
+  hearts: { name: 'Hearts', stickers: 'hearts', inset: inset(92), stroke: 10, art: (ctx) => chain(ctx, heart) },
   polka: {
+    stickers: 'bows',
     name: 'Polka dot',
     inset: inset(100),
     stroke: 8,
@@ -81,8 +81,8 @@ export const PATTERNS = {
       card(ctx, L.box)
     },
   },
-  lace: { name: 'Lace', inset: inset(112), stroke: 8, art: lace },
   gingham: {
+    stickers: 'flowers',
     name: 'Gingham',
     inset: inset(100),
     stroke: 8,
@@ -97,8 +97,11 @@ export const PATTERNS = {
       card(ctx, L.box)
     },
   },
-  daisy: { name: 'Daisy chain', inset: inset(92), stroke: 10, art: (ctx) => chain(ctx, flower) },
+  daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx) => chain(ctx, flower) },
+  plain: { name: 'Plain', stickers: 'none', inset: inset(36), stroke: 12 },
+  lace: { name: 'Lace', stickers: 'bows', inset: inset(112), stroke: 8, art: lace },
   checker: {
+    stickers: 'zap',
     name: 'Checker',
     inset: inset(72),
     stroke: 8,
@@ -111,6 +114,7 @@ export const PATTERNS = {
     },
   },
   film: {
+    stickers: 'sparkles',
     name: 'Film',
     inset: inset(56, 104, 40),
     ink: '#fff',
@@ -123,9 +127,10 @@ export const PATTERNS = {
       }
     },
   },
-  bubble: { name: 'Bubble', inset: inset(44), stroke: 16, shape: 'oval' },
-  stamp: { name: 'Stamp', inset: inset(60), stroke: 14, shape: 'stamp' },
+  bubble: { name: 'Bubble', stickers: 'sparkles', inset: inset(44), stroke: 16, shape: 'oval' },
+  stamp: { name: 'Stamp', stickers: 'hearts', inset: inset(60), stroke: 14, shape: 'stamp' },
   ticket: {
+    stickers: 'party',
     name: 'Ticket',
     inset: inset(184, 60, 60),
     stroke: 8,
@@ -515,7 +520,7 @@ function fitSize(ctx, text, maxWidth, max) {
  * white, exactly as it will print. `shots[i]` is the video or image for pose i; a missing pose shows
  * its number. Photos are mirrored so the print matches what people saw on screen.
  */
-export function render(canvas, shots, { count = 'one', pattern = 'plain', stickers = 'none', caption = '', showDate = true, scale = 1 } = {}) {
+export function render(canvas, shots, { count = 'one', pattern = 'plain', caption = '', showDate = true, scale = 1 } = {}) {
   const L = layout(count, pattern)
   const ink = L.ink ?? '#000'
   const paper = L.paper ?? '#fff'
@@ -550,7 +555,7 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', sticke
     ctx.fillStyle = ink
     for (let y = L.box.y; y < L.box.y + L.box.h; y += 32) ctx.fillRect(W / 2 - 2, y, 4, 16)
   }
-  drawStickers(ctx, L, stickers)
+  drawStickers(ctx, L, L.stickers)
 
   // Caption and date sit centred in each caption band.
   const text = caption.trim()

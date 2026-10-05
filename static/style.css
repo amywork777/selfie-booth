@@ -77,8 +77,6 @@ video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events:
 }
 
 .controls { display: grid; gap: calc(var(--space-unit) * 3); }
-.options { display: grid; grid-template-columns: 1fr auto; gap: 14px 20px; align-items: end; }
-.field.wide { grid-column: 1 / -1; }
 .field { display: grid; gap: 8px; min-width: 0; }
 .label { font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -140,7 +138,6 @@ input:focus, .choice:focus-visible, .btn:focus-visible { outline: 3px solid var(
 [data-state="review"] #shoot, [data-state="printing"] #shoot, [data-state="done"] #shoot { display: none; }
 [data-state="review"] #retake, [data-state="review"] #print,
 [data-state="printing"] #retake, [data-state="printing"] #print { display: block; }
-[data-state="countdown"] .options, [data-state="printing"] .options, [data-state="done"] .options { visibility: hidden; }
 [data-state="countdown"] #shoot { visibility: hidden; }
 [data-state="done"] .actions { visibility: hidden; }
 
@@ -149,13 +146,12 @@ input:focus, .choice:focus-visible, .btn:focus-visible { outline: 3px solid var(
   .booth { grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: auto minmax(0, 1fr); }
   .top { grid-column: 1 / -1; }
   .controls { align-content: end; }
-  .options { grid-template-columns: 1fr; }
   .actions { flex-direction: column; }
   .btn { flex: none; }
 }
 
 @media (max-width: 600px) {
-  .options, .host { grid-template-columns: 1fr; }
+  .host { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

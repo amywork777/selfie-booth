@@ -17,17 +17,15 @@
 </head>
 <body>
   <h1 class="title">Frames</h1>
-  <p>Every choice with a stand-in photo, exactly as it prints. Photos, patterns and stickers all mix freely.</p>
+  <p>Every choice with a stand-in photo, exactly as it prints. Every pattern works with every photo count, and comes with its own stickers.</p>
   <h2 class="label">Step 1: how many photos</h2>
   <div class="grid" id="counts"></div>
   <h2 class="label">Step 2: patterns</h2>
   <div class="grid" id="patterns"></div>
   <h2 class="label">Mixed</h2>
   <div class="grid" id="mixes"></div>
-  <h2 class="label">Step 3: sticker packs</h2>
-  <div class="grid" id="stickers"></div>
   <script type="module">
-    import { COUNTS, PATTERNS, STICKERS, render, shotCount } from './label.js'
+    import { COUNTS, PATTERNS, render, shotCount } from './label.js'
 
     // A stand-in photo: soft background, a face-shaped blob and shoulders, so tones and the window shape show.
     const photo = document.createElement('canvas')
@@ -68,9 +66,8 @@
     const counts = Object.keys(COUNTS)
     Object.keys(PATTERNS).forEach((pattern, i) => {
       const count = counts[(i + 1) % counts.length]
-      add('mixes', `${COUNTS[count].name}, ${PATTERNS[pattern].name}`, { count, pattern, stickers: Object.keys(STICKERS)[1 + (i % 7)] })
+      add('mixes', `${COUNTS[count].name}, ${PATTERNS[pattern].name}`, { count, pattern })
     })
-    for (const [key, s] of Object.entries(STICKERS)) add('stickers', s.name, { stickers: key })
   </script>
 </body>
 </html>
