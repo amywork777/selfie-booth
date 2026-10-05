@@ -80,7 +80,7 @@ video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events:
 .options { display: grid; grid-template-columns: auto 1fr auto; gap: 20px; align-items: end; }
 .field { display: grid; gap: 8px; min-width: 0; }
 .label { font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); }
-.choices { display: flex; gap: 8px; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .choice, input, .btn {
   font: inherit; color: var(--ink);

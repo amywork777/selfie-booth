@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Selfie booth frames</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { overflow: auto; padding: 28px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 28px; }
+    figure { margin: 0; display: grid; gap: 10px; }
+    canvas { width: 100%; border: 3px solid var(--rule); border-radius: 6px; box-shadow: 6px 6px 0 var(--ink); background: #fff; }
+    figcaption { font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <h1 class="title">Frames</h1>
+  <p>Every frame with a sample photo, exactly as it prints.</p>
+  <div class="grid" id="grid"></div>
+  <script type="module">
+    import { FRAMES, render } from './label.js'
+
+    // A stand-in photo: soft background, a face-shaped blob and shoulders, so tones and the window shape show.
+    const photo = document.createElement('canvas')
+    photo.width = 900
+    photo.height = 1200
+    const g = photo.getContext('2d')
+    const bg = g.createLinearGradient(0, 0, 0, 1200)
+    bg.addColorStop(0, '#d8d8d8')
+    bg.addColorStop(1, '#8a8a8a')
+    g.fillStyle = bg
+    g.fillRect(0, 0, 900, 1200)
+    g.fillStyle = '#3a3a3a'
+    g.beginPath(); g.ellipse(450, 1180, 380, 300, 0, 0, Math.PI * 2); g.fill()
+    const face = g.createRadialGradient(410, 480, 40, 450, 520, 260)
+    face.addColorStop(0, '#f2d6c4')
+    face.addColorStop(1, '#a07a66')
+    g.fillStyle = face
+    g.beginPath(); g.ellipse(450, 520, 210, 270, 0, 0, Math.PI * 2); g.fill()
+    g.fillStyle = '#222'
+    g.beginPath(); g.ellipse(450, 330, 240, 130, 0, Math.PI, 0); g.fill()
+    g.beginPath(); g.arc(380, 500, 18, 0, Math.PI * 2); g.arc(520, 500, 18, 0, Math.PI * 2); g.fill()
+    g.lineWidth = 12; g.strokeStyle = '#5a2a2a'
+    g.beginPath(); g.arc(450, 600, 70, 0.2, Math.PI - 0.2); g.stroke()
+
+    await Promise.all([document.fonts.load('900 40px Doto'), document.fonts.load('700 80px Caveat')]).catch(() => {})
+    for (const [key, f] of Object.entries(FRAMES)) {
+      const fig = document.createElement('figure')
+      const c = document.createElement('canvas')
+      render(c, photo, { frame: key, caption: "amy's party", showDate: true })
+      const cap = document.createElement('figcaption')
+      cap.textContent = f.name
+      fig.append(c, cap)
+      document.getElementById('grid').append(fig)
+    }
+  </script>
+</body>
+</html>

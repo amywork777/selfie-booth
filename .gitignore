@@ -3,3 +3,5 @@ __pycache__/
 certs/
 node_modules/
 .claude/
+.playwright-mcp/
+*.png
