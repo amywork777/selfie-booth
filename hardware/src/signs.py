@@ -21,10 +21,10 @@ from panels import heart, scalloped_rect, text
 LETTER_H = 0.8
 TOPPER_W = 170.0
 TOPPER_H = 54.0
-TABLE_W, TABLE_H, TABLE_T = 130.0, 182.0, 3.0
+TABLE_W, TABLE_H, TABLE_T = 130.0, 182.0, 2.0
 TABLE_TILT = 10.0  # degrees back from vertical
-BASE_D, BASE_H = 44.0, 18.0
-SLOT_DEPTH = 13.0
+BASE_D, BASE_H = 32.0, 14.0
+SLOT_DEPTH = 10.0
 
 
 def topper_sketches():
@@ -70,7 +70,7 @@ def raised(cut, lettering, thickness):
 
 def table_base():
     """A block with a slot that holds the table sign tilted back."""
-    block = bd.Box(TABLE_W * 0.8, BASE_D, BASE_H, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
+    block = bd.Box(TABLE_W * 0.6, BASE_D, BASE_H, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     slot = bd.Box(TABLE_W + 2, TABLE_T + 0.5, 60, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN))
     slot = slot.rotate(bd.Axis.X, -TABLE_TILT).moved(bd.Location((0, 0, BASE_H - SLOT_DEPTH)))
     return block - slot
