@@ -42,13 +42,12 @@ PRINTER_Y0 = T + 3.0  # printer front, just behind the front panel so the label 
 IPAD_CX = T + IPAD_ZONE / 2
 IPAD_CZ = 150.0  # iPad centre height: its pocket clears the deck
 
-# Print slot. LABEL_EXIT_Z is how high above the table the label leaves the printer, measured with the
-# printer standing on a table. Rollo doesn't publish it: measure yours and set it here; the slot follows.
-LABEL_EXIT_Z = 70.0  # estimate until measured
-SLOT_W = 122.0  # a 4.1 in label is 104 mm wide
-SLOT_HALF_H = 12.0  # slot runs this far above and below the exit
-SLOT_Z0 = DECK_TOP + LABEL_EXIT_Z - SLOT_HALF_H
-SLOT_Z1 = DECK_TOP + LABEL_EXIT_Z + SLOT_HALF_H
+# Print slot. Rollo doesn't publish where the label leaves the printer, so the slot is made tall enough
+# to catch it anywhere across the upper part of the printer's front, with room to spare.
+LABEL_EXIT_RANGE = (35.0, PRINTER_H)  # where the exit could be, above the printer's bottom
+SLOT_W = 130.0  # a 4.1 in label is 104 mm wide
+SLOT_Z0 = DECK_TOP + LABEL_EXIT_RANGE[0]
+SLOT_Z1 = DECK_TOP + LABEL_EXIT_RANGE[1] + 5.0
 SLOT_BEZEL = 10.0  # raised surround
 
 # Round sign above the slot.

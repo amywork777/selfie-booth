@@ -57,9 +57,9 @@ iPad; a USB-C to USB-A adapter for the printer cable; an HDMI dummy plug for the
    MacBook, cords out through the back notch.
 6. Thumb-screw the back on.
 
-**Before cutting:** measure the printer (published size: 195 x 75 x 85 mm), and with it standing on a
-table, measure how high the label comes out. Set that as `LABEL_EXIT_Z` in `src/box_dims.py`: the print
-slot is centred on it (24 mm tall, 122 mm wide). Do a test cut of one finger joint
+**Before cutting:** measure the printer (published size: 195 x 75 x 85 mm). The print slot is 130 x 60 mm
+and covers the whole upper part of the printer's front, so the label gets out wherever it leaves the
+printer; no need to measure that. Do a test cut of one finger joint
 in your plywood first: real 1/4 in plywood is often thinner than 6 mm (change `T`).
 
 Rebuild and check: `.venv/bin/python src/box.py && .venv/bin/python src/box_parts.py && .venv/bin/python checks/box_check.py`
