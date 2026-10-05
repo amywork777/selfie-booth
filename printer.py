@@ -19,10 +19,17 @@ INVERT = False  # TSPL prints 0 bits as black, same as PIL's "1" mode; flip if p
 
 
 def _backend():
-    # Homebrew's libusb on the Mac; the system one on the Pi.
-    return usb.backend.libusb1.get_backend(
-        find_library=lambda _: "/opt/homebrew/lib/libusb-1.0.dylib"
-    ) if sys.platform == "darwin" else None
+    # libusb-package ships libusb inside the Python package, so a Mac needs no Homebrew.
+    # Fall back to Homebrew's copy, then the system one (the Pi).
+    try:
+        import libusb_package
+
+        return libusb_package.get_libusb1_backend()
+    except ImportError:
+        pass
+    if sys.platform == "darwin":
+        return usb.backend.libusb1.get_backend(find_library=lambda _: "/opt/homebrew/lib/libusb-1.0.dylib")
+    return None
 
 
 class PrinterNotFound(Exception):
