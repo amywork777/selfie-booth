@@ -67,16 +67,6 @@ video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events:
   font-weight: 500; text-align: center;
 }
 
-/* Hand-made detail: one round die-cut sticker on the corner of the paper. */
-.sticker {
-  position: absolute; top: -18px; right: -22px; z-index: 2;
-  display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%;
-  background: #a8e6cf; color: var(--ink);
-  outline: 4px solid #fff; box-shadow: 0 6px 14px -8px rgba(36, 26, 34, 0.5);
-  font: 900 15px/1.05 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; text-align: center;
-  transform: rotate(10deg);
-}
-
 .controls { display: grid; gap: calc(var(--space-unit) * 3); }
 .field { display: grid; gap: 8px; min-width: 0; }
 .label { font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); }
@@ -165,7 +155,6 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 #retake, #print, #to-photo { display: none; }
 [data-state="caption"] #to-photo { display: block; }
 [data-state="caption"] #shoot { display: none; }
-[data-state="caption"] .sticker { display: none; }
 [data-state="review"] #back, [data-state="printing"] #back, [data-state="done"] #back { display: none; }
 [data-state="countdown"] #back { visibility: hidden; }
 [data-state="review"] #shoot, [data-state="printing"] #shoot, [data-state="done"] #shoot { display: none; }
