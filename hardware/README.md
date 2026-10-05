@@ -12,6 +12,9 @@ Everything can be 3D printed. If you have a laser cutter, the two panels can be 
 | Cradle (holds the iPad, tilted back 15°) | `3MF/cradle_print.3mf`: print standing on its base. No supports. | |
 | Bezel and sign (170 x 247 mm) | `3MF/bezel_print.3mf`: flat, lettering up. | `DXF/bezel.dxf`, 3 mm sheet |
 | Front plate (245 x 103 mm) | `3MF/front_plate_print.3mf`: flat, lettering up. | `DXF/front_plate.dxf`, 3 mm sheet |
+| Sign topper (event name, above the iPad) | `3MF/sign_topper_print.3mf`: flat, lettering up. Posts slide into the sleeves on the back of the cradle. | |
+| Table sign (the four steps) | `3MF/table_sign_print.3mf`: flat, lettering up. | |
+| Table sign base | `3MF/table_sign_base_print.3mf`: as loaded. | |
 | Screws | 4 x M3 x 12 self-tapping, or glue | |
 
 Every part fits a 256 mm Bambu plate. Together they are about 260 cm³ of solid model. To use even less
@@ -28,6 +31,12 @@ change at the layer just above 2 mm in Bambu Studio. In the DXFs, the `CUT` laye
 4. Put the iPad in the cradle, then hang the bezel on the four pegs on the cradle's side walls the
    same way.
 5. To load labels, lift the whole stand off the printer.
+
+## Signs
+
+The topper's text is `SIGN_TEXT` in `src/dims.py` ("amy's 30th" for now). Change it for each event and
+run `.venv/bin/python src/signs.py` to make a new `sign_topper_print.3mf`. The topper sits behind the
+camera, so it never shows up in photos.
 
 ## Dimensions and assumptions
 

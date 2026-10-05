@@ -12,7 +12,7 @@ from cadgen import step, threemf
 
 from panels import heart
 from dims import (
-    BACK_H, BACK_T, BEZEL_PEG_Z, CABLE_NOTCH_W, FLOOR_T, LIP_H, LIP_T, PEG_D, PEG_HEAD_D, PEG_HEAD_T,
+    BACK_H, BACK_T, BEZEL_PEG_Z, TOPPER_FIT, TOPPER_POST_W, TOPPER_POST_X, TOPPER_SLEEVE_FLOOR, TOPPER_SLEEVE_Z, TOPPER_T, CABLE_NOTCH_W, FLOOR_T, LIP_H, LIP_T, PEG_D, PEG_HEAD_D, PEG_HEAD_T,
     PEG_LEN, POCKET_DEPTH, POCKET_W, SCREW_PILOT_D, SCREW_SPACING_X, TILT_DEG, WALL_H, WALL_T, WALL_X,
 )
 
@@ -55,13 +55,28 @@ def upright():
     for sx in (-1, 1):
         for z in BEZEL_PEG_Z:
             body += peg(sx * WALL_X, z)
+    # Sleeves on the back face for the sign topper's posts.
+    z0, z1 = TOPPER_SLEEVE_Z
+    wall = 2.2
+    pocket_half = TOPPER_POST_W / 2 + TOPPER_FIT / 2
+    pocket_depth = TOPPER_T + TOPPER_FIT
+    for sx in (-1, 1):
+        x = sx * TOPPER_POST_X
+        body += box(x - pocket_half - wall, x + pocket_half + wall, DEPTH, DEPTH + pocket_depth + wall, z0, z1)
+        body -= box(x - pocket_half, x + pocket_half, DEPTH, DEPTH + pocket_depth, z0 + TOPPER_SLEEVE_FLOOR, z1 + 1)
     return body
+
+
+def tilted(shape):
+    """Move something drawn in the upright cradle frame to where the tilted cradle puts it."""
+    lift = DEPTH * math.sin(math.radians(TILT_DEG))  # tilting drops the back-bottom edge this far
+    return shape.rotate(bd.Axis.X, -TILT_DEG).moved(bd.Location((0, 0, lift)))
 
 
 def make_cradle():
     tilt = math.radians(TILT_DEG)
-    lift = DEPTH * math.sin(tilt)  # tilting drops the back-bottom edge this far
-    body = upright().rotate(bd.Axis.X, -TILT_DEG).moved(bd.Location((0, 0, lift)))
+    lift = DEPTH * math.sin(tilt)
+    body = tilted(upright())
 
     # Wedge under the tilted floor so the base is flat.
     back_y = DEPTH * math.cos(tilt)

@@ -22,6 +22,11 @@ BUMP = 7.0
 WINDOW_MARGIN = 0.5  # window a hair bigger than the lit screen
 
 
+def bezel_top():
+    """Highest point of the bezel, scallops included, in the cradle frame."""
+    return IPAD_TOP + 6.0 - BUMP + SIGN_H + BUMP
+
+
 def bezel_sketches():
     """(cut, lettering): the panel outline with its holes, and the sign lettering."""
     body_top = IPAD_TOP + 6.0

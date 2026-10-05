@@ -47,6 +47,15 @@ POCKET_W = IPAD_W + 2 * IPAD_CLEAR
 POCKET_DEPTH = IPAD_T + 0.8  # front lip to back plate
 WALL_X = POCKET_W / 2 + WALL_T / 2  # centreline of each side wall
 
+# Sign topper: two posts slide into sleeves on the back of the cradle; the sign rides above the bezel.
+TOPPER_T = 3.0
+TOPPER_POST_X = 64.0  # post centrelines, outside the heart window in the back plate
+TOPPER_POST_W = 10.0
+TOPPER_SLEEVE_Z = (70.0, 112.0)  # along the cradle; the post bottoms out on the sleeve floor
+TOPPER_SLEEVE_FLOOR = 4.0
+TOPPER_FIT = 0.4  # sliding clearance in the sleeve
+SIGN_TEXT = "amy's 30th"  # the event name on the topper: change it and rerun src/signs.py
+
 # M3 screws join the cradle to the deck.
 SCREW_HOLE_D = 3.4  # clearance through the deck
 SCREW_PILOT_D = 2.6  # self-tapping into the cradle base
