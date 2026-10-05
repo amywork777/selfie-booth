@@ -12,6 +12,8 @@ body {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   overflow: hidden;
+  touch-action: manipulation; /* no double-tap zoom */
+  -webkit-text-size-adjust: 100%;
 }
 video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
@@ -145,6 +147,7 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 /* Doodling on Plain: tools show, and the preview takes finger drawing. */
 .doodle-tool, [data-mode="event"] #caption, [data-mode="event"] #date { display: none; }
 [data-doodle="on"] .doodle-tool { display: block; }
+[data-state="caption"][data-doodle="on"] .stage { touch-action: none; }
 [data-state="caption"][data-doodle="on"] #label { touch-action: none; cursor: crosshair; }
 [data-state="caption"] .message { pointer-events: none; }
 #step-title:empty { display: none; }

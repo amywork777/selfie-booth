@@ -383,6 +383,13 @@ $('back').onclick = () => {
 }
 $('to-photo').onclick = next
 
+// ---- No zoom ----------------------------------------------------------------------------------------
+// iPad Safari ignores user-scalable=no, so cancel pinch gestures and multi-finger touches directly.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false })
+}
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault() }, { passive: false })
+
 // ---- Doodling on Plain -----------------------------------------------------------------------------
 
 function labelPoint(e) {
