@@ -61,8 +61,16 @@ export const PATTERNS = {
     name: 'Hearts',
     stickers: 'hearts',
     inset: inset(92),
-    // Each photo is outlined with a row of small hearts instead of a plain line.
-    outline: (ctx, s, k) => heartLine(ctx, s, k),
+    // Each photo is cut into a heart, with a bold heart outline.
+    window: heartWindow,
+    outline: (ctx, s, k) => {
+      ctx.beginPath()
+      heartWindow(ctx, s)
+      ctx.lineWidth = 12 * k
+      ctx.lineJoin = 'round'
+      ctx.strokeStyle = '#000'
+      ctx.stroke()
+    },
     art: (ctx, p) => chain(ctx, heart, p),
   },
   polka: {
@@ -300,22 +308,18 @@ function sketchRect(ctx, s, k) {
   pen(ctx, pts.map(([x, y]) => [x + 5 * k, y + 4 * k]), rand, 9 * k, true)
 }
 
-/** Small hearts spaced evenly round a photo's edge. */
-function heartLine(ctx, s, k) {
-  const size = 11 * k, step = 30 * k
-  const edge = (x0, y0, x1, y1) => {
-    const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / step))
-    for (let i = 0; i < n; i++) {
-      ctx.save()
-      ctx.translate(x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n)
-      heart(ctx, size, 4 * k)
-      ctx.restore()
-    }
-  }
-  edge(s.x, s.y, s.x + s.w, s.y)
-  edge(s.x + s.w, s.y, s.x + s.w, s.y + s.h)
-  edge(s.x + s.w, s.y + s.h, s.x, s.y + s.h)
-  edge(s.x, s.y + s.h, s.x, s.y)
+/** Add a heart, as big as fits centred in the slot, to the current path. */
+function heartWindow(ctx, s) {
+  const w = Math.min(s.w, s.h * 1.08) * 0.98
+  const h = w * 0.92
+  const x = s.x + (s.w - w) / 2, y = s.y + (s.h - h) / 2
+  const top = h * 0.3
+  ctx.moveTo(x + w / 2, y + top)
+  ctx.bezierCurveTo(x + w / 2, y, x, y, x, y + top)
+  ctx.bezierCurveTo(x, y + (h + top) / 2, x + w / 2, y + (h + top) / 2, x + w / 2, y + h)
+  ctx.bezierCurveTo(x + w / 2, y + (h + top) / 2, x + w, y + (h + top) / 2, x + w, y + top)
+  ctx.bezierCurveTo(x + w, y, x + w / 2, y, x + w / 2, y + top)
+  ctx.closePath()
 }
 
 /** A daisy: white petals outlined in black round a solid centre, unlike the solid flower sticker. */
@@ -479,7 +483,7 @@ function sourceSize(src) {
 }
 
 /** Crop `src` to fill the slot, mirrored, then levels and dither just that slot. */
-function drawPhoto(ctx, src, s, scale) {
+function drawPhoto(ctx, src, s, scale, window, paper) {
   const px = Math.round(s.x * scale), py = Math.round(s.y * scale)
   const pw = Math.round(s.w * scale), ph = Math.round(s.h * scale)
   const [sw, sh] = sourceSize(src)
@@ -497,6 +501,14 @@ function drawPhoto(ctx, src, s, scale) {
   const img = ctx.getImageData(px, py, pw, ph)
   paint(img.data, dither(levels(toGray(img.data)), pw, ph))
   ctx.putImageData(img, px, py)
+  if (window) {
+    // Shaped window: paper over the part of the slot outside the shape.
+    ctx.beginPath()
+    ctx.rect(s.x, s.y, s.w, s.h)
+    window(ctx, s)
+    ctx.fillStyle = paper
+    ctx.fill('evenodd')
+  }
 }
 
 /** An empty slot waiting for its pose: the pose number, big and dotted. */
@@ -540,7 +552,7 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
 
   for (const s of L.slots) {
     const src = shots[s.shot]
-    if (src) drawPhoto(ctx, src, s, scale)
+    if (src) drawPhoto(ctx, src, s, scale, L.window, paper)
     else drawWaiting(ctx, s, s.shot + 1, ink)
   }
   // Outlines after every photo is down, so a heart outline isn't covered by the next photo.
