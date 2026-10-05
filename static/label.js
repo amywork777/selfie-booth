@@ -92,14 +92,14 @@ export const PATTERNS = {
     inset: inset(124),
     stroke: 8,
     under(ctx, p) {
-      // Picnic check: stripes are a fine dot pattern (they print grey), crossings are solid black.
+      // Soft picnic check: stripes are a light dot pattern, crossings a medium one, so it prints pale grey.
       const { frame: f, k } = p
       const band = 26 * k, step = 52 * k
       clipTo(ctx, f, () => {
-        ctx.fillStyle = halftone(ctx)
+        ctx.fillStyle = halftone(ctx, 'light')
         for (let y = f.y; y < f.y + f.h; y += step) ctx.fillRect(f.x, y, f.w, band)
         for (let x = f.x; x < f.x + f.w; x += step) ctx.fillRect(x, f.y, band, f.h)
-        ctx.fillStyle = '#000'
+        ctx.fillStyle = halftone(ctx, 'mid')
         for (let y = f.y; y < f.y + f.h; y += step) for (let x = f.x; x < f.x + f.w; x += step) ctx.fillRect(x, y, band, band)
       })
       card(ctx, p)
@@ -183,15 +183,19 @@ function card(ctx, p) {
   ctx.stroke()
 }
 
-/** A 50% dot pattern that prints as a light grey. */
-function halftone(ctx) {
+/** A dot pattern that prints as grey: 'light' is one dot in four (25%), 'mid' a checkerboard (50%). */
+function halftone(ctx, tone) {
   const tile = document.createElement('canvas')
   tile.width = tile.height = 4
   const t = tile.getContext('2d')
   t.fillStyle = '#000'
   t.fillRect(0, 0, 2, 2)
-  t.fillRect(2, 2, 2, 2)
-  return ctx.createPattern(tile, 'repeat')
+  if (tone === 'mid') t.fillRect(2, 2, 2, 2)
+  const pattern = ctx.createPattern(tile, 'repeat')
+  // Keep the dots at real pixel size even on the scaled-down previews, so the grey matches the print.
+  const k = ctx.getTransform().a
+  pattern.setTransform(new DOMMatrix([1 / k, 0, 0, 1 / k, 0, 0]))
+  return pattern
 }
 
 /** Small hearts spaced evenly round a photo's edge. */
