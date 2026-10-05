@@ -13,8 +13,20 @@ import usb.util
 from PIL import Image, ImageOps
 
 VID, PID = 0x09C5, 0x0588
-W, H = 808, 1218  # 4x6 at 203 dpi; width must be a multiple of 8 or rows skew
-GAP = "0.12,0"  # label stock; use "0,0" for continuous paper
+DPI = 203
+GAP = "0.12,0"  # gap between labels; continuous paper uses "0,0"
+
+# Standard Rollo papers, matching PAPERS in static/label.js: (width in, length in, has gaps).
+PAPERS = {
+    "4x6": (4, 6, True), "4x6roll": (4, 6, False), "4x4": (4, 4, True),
+    "4x3": (4, 3, True), "4x2": (4, 2, True), "3x2": (3, 2, True),
+}
+
+
+def paper_dots(paper):
+    """(width, height) in printer dots. The width must be a multiple of 8 or every row skews."""
+    w_in, h_in, _ = PAPERS.get(paper, PAPERS["4x6"])
+    return int(w_in * DPI) // 8 * 8, round(h_in * DPI)
 INVERT = False  # TSPL prints 0 bits as black, same as PIL's "1" mode; flip if prints come out negative
 
 
@@ -74,12 +86,14 @@ class Printer:
                         raise
 
 
-def label(img: Image.Image, dither=True) -> bytes:
-    """Fit an image to the 4x6 label and wrap it in TSPL.
+def label(img: Image.Image, dither=True, paper="4x6") -> bytes:
+    """Fit an image to the paper and wrap it in TSPL.
 
     dither=False for images that are already black and white (the iPad dithers
     its own preview, so the print matches the screen dot for dot).
     """
+    w_in, h_in, gaps = PAPERS.get(paper, PAPERS["4x6"])
+    W, H = paper_dots(paper)
     img = ImageOps.fit(img.convert("L"), (W, H))
     if dither:
         bw = ImageOps.autocontrast(img).convert("1")  # Floyd-Steinberg
@@ -88,5 +102,5 @@ def label(img: Image.Image, dither=True) -> bytes:
     bits = bw.tobytes()
     if INVERT:
         bits = bytes(b ^ 0xFF for b in bits)
-    head = f"SIZE 4,6\r\nGAP {GAP}\r\nDIRECTION 1\r\nCLS\r\nBITMAP 0,0,{W // 8},{H},0,"
+    head = f"SIZE {w_in},{h_in}\r\nGAP {GAP if gaps else '0,0'}\r\nDIRECTION 1\r\nCLS\r\nBITMAP 0,0,{W // 8},{H},0,"
     return head.encode() + bits + b"\r\nPRINT 1\r\n"

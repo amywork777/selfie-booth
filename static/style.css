@@ -37,7 +37,7 @@ video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events:
 /* The label preview: a sheet of thermal paper showing the exact dots that will print. */
 .stage { position: relative; display: grid; place-items: center; min-height: 0; container-type: size; }
 /* As big as the stage allows in either direction, always at the label's 808:1218 shape. */
-.sheet { position: relative; height: min(100cqh, 100cqw * 1218 / 808); aspect-ratio: 808 / 1218; }
+.sheet { position: relative; height: min(100cqh, 100cqw * var(--label-tall, 1.5074)); aspect-ratio: var(--label-ratio, 808 / 1218); }
 .paper {
   position: relative;
   width: 100%;
@@ -123,9 +123,10 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
   display: grid; grid-template-columns: repeat(4, minmax(0, 200px)); justify-content: center; gap: 28px 22px;
   align-content: start; overflow-y: auto; padding: 14px 14px 14px 14px; -webkit-overflow-scrolling: touch;
 }
+.tile[hidden] { display: none; }
 .tile { display: grid; gap: 10px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; }
 .tile canvas {
-  width: 100%; aspect-ratio: 808 / 1218; background: #fff; image-rendering: pixelated;
+  width: 100%; aspect-ratio: var(--label-ratio, 808 / 1218); background: #fff; image-rendering: pixelated;
   border: 3px solid var(--rule); border-radius: 6px; box-shadow: 5px 5px 0 var(--ink);
   transition: transform 90ms, box-shadow 90ms;
 }
@@ -137,7 +138,7 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 .tile:focus-visible canvas { outline: 3px solid var(--accent); outline-offset: 5px; }
 .tile-name { font: 700 var(--text-body)/1.1 var(--font-sans); }
 .tile-poses { display: block; font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); margin-top: 4px; }
-.host { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; padding-top: 14px; border-top: 3px solid var(--rule); }
+.host { display: grid; grid-template-columns: 1fr; gap: 16px; padding-top: 14px; border-top: 3px solid var(--rule); max-height: 46vh; overflow-y: auto; }
 
 /* Step 3: caption field and date toggle under the label preview. */
 .caption-step { display: none; gap: 12px; }
@@ -176,7 +177,6 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 }
 
 @media (max-width: 600px) {
-  .host { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

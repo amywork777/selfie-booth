@@ -93,9 +93,9 @@ To see every pattern and photo count at once: https://selfie-booth.local:8443/fr
 In `printer.py`:
 
 - `VID, PID`: your printer's USB IDs. On a Mac, find them with `system_profiler SPUSBDataType`.
-- `GAP`: `"0.12,0"` for labels with gaps between them, `"0,0"` for continuous paper.
+- `PAPERS`: the paper sizes the booth offers (also in `static/label.js`). Labels use a gap, continuous rolls don't.
 - `INVERT`: flip it if prints come out as a negative.
-- The label is 808 dots wide, not 812: the width must be a multiple of 8 or every row skews.
+- Label widths are rounded down to a multiple of 8 dots (4 in is 808, not 812), or every row skews.
 
 ## Run it on a Raspberry Pi instead of a Mac (not tested yet)
 

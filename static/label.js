@@ -1,4 +1,4 @@
-// The printed label: 808 x 1218 dots (4 x 6 inches at 203 dpi). Frames are bold black shapes and
+// The printed label: the paper's size in printer dots (203 dpi), 808 x 1218 for 4 x 6. Frames are bold black shapes and
 // solid fills, because thin lines and greys print badly on thermal paper.
 //
 // A label is a photo COUNT (how many poses and how they're arranged) and a PATTERN (the border round
@@ -6,8 +6,24 @@
 // and its stickers are placed relative to wherever the photos ended up.
 import { dither, levels, paint, toGray } from './dots.js'
 
-export const W = 808
-export const H = 1218
+// Standard Rollo papers (it takes 1.57 to 4.1 in wide). Labels have gaps between them; a continuous
+// roll doesn't. Keep in step with PAPERS in printer.py.
+export const PAPERS = {
+  '4x6': { name: '4 x 6 labels', w: 4, h: 6, gap: true },
+  '4x6roll': { name: '4 x 6 continuous roll', w: 4, h: 6, gap: false },
+  '4x4': { name: '4 x 4 labels', w: 4, h: 4, gap: true },
+  '4x3': { name: '4 x 3 labels', w: 4, h: 3, gap: true, counts: ['one', 'two', 'four'] },
+  '4x2': { name: '4 x 2 labels', w: 4, h: 2, gap: true, counts: ['one'] },
+  '3x2': { name: '3 x 2 labels', w: 3, h: 2, gap: true, counts: ['one'] },
+}
+/** The photo counts that fit a paper: small labels only have room for one photo. */
+export const paperCounts = (paper) => (PAPERS[paper] ?? PAPERS['4x6']).counts ?? Object.keys(COUNTS)
+
+/** The label's size in printer dots. The width is a whole number of bytes (a multiple of 8). */
+export function paperSize(paper) {
+  const p = PAPERS[paper] ?? PAPERS['4x6']
+  return { W: Math.floor((p.w * 203) / 8) * 8, H: Math.round(p.h * 203) }
+}
 
 const DATE = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
@@ -17,7 +33,7 @@ const rect = (x, y, w, h, shot = 0) => ({ x, y, w, h, shot })
 // Each arrangement fills a pattern's content box: photos on top, the caption band underneath.
 
 const GAP = 16
-const bandHeight = (box) => Math.round(Math.max(150, box.h * 0.21))
+const bandHeight = (box) => Math.round(Math.max(110, box.h * 0.21))
 
 /** `n` photos stacked in a column over a caption band. */
 function column(box, n) {
@@ -137,14 +153,16 @@ export const PATTERNS = {
  * A pattern plus a photo count, ready to draw: one panel (or two for twin strips), each with its own
  * frame, content box, photo slots and caption band.
  */
-export function layout(count, pattern) {
+export function layout(count, pattern, W = 808, H = 1218) {
   const P = PATTERNS[pattern] ?? PATTERNS.plain
   const C = COUNTS[count] ?? COUNTS.one
   // Twin strips leave a white gutter down the middle for the cut line.
   const half = (W - GUTTER) / 2
   const frames = C.halves ? [{ x: 0, y: 0, w: half, h: H }, { x: W - half, y: 0, w: half, h: H }] : [{ x: 0, y: 0, w: W, h: H }]
+  // Borders shrink for narrow strips, and a little on shorter paper so the photos keep their room.
+  const paperScale = Math.min(1, Math.max(0.55, Math.min(H / 1218, W / 808)))
   const panels = frames.map((frame) => {
-    const k = C.halves ? 0.6 : 1
+    const k = (C.halves ? 0.6 : 1) * paperScale
     const i = P.inset
     const box = { x: frame.x + i.l * k, y: frame.y + i.t * k, w: frame.w - (i.l + i.r) * k, h: frame.h - (i.t + i.b) * k }
     return { frame, k, box, ...C.arrange(box) }
@@ -163,7 +181,7 @@ export function layout(count, pattern) {
 export const shotCount = (count) => ({ one: 1, two: 2, four: 4, twin: 4 })[count] ?? 1
 
 /** Bold dashed line down the gutter between twin strips, with scissors at the top. */
-function cutLine(ctx) {
+function cutLine(ctx, W, H) {
   const x = W / 2
   ctx.fillStyle = '#fff'
   ctx.fillRect(x - GUTTER / 2, 0, GUTTER, H)
@@ -640,10 +658,11 @@ function fitSize(ctx, text, maxWidth, max) {
  * white, exactly as it will print. `shots[i]` is the video or image for pose i; a missing pose shows
  * its number. Photos are mirrored so the print matches what people saw on screen.
  */
-export function render(canvas, shots, { count = 'one', pattern = 'plain', caption = '', showDate = true, doodle = [], scale = 1 } = {}) {
-  const L = layout(count, pattern)
+export function render(canvas, shots, { count = 'one', pattern = 'plain', paper = '4x6', caption = '', showDate = true, doodle = [], scale = 1 } = {}) {
+  const { W, H } = paperSize(paper)
+  const L = layout(count, pattern, W, H)
   const ink = L.ink ?? '#000'
-  const paper = L.paper ?? '#fff'
+  const background = L.paper ?? '#fff'
   const cw = Math.round(W * scale)
   const ch = Math.round(H * scale)
   if (canvas.width !== cw || canvas.height !== ch) {
@@ -652,13 +671,13 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
   }
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
   ctx.setTransform(scale, 0, 0, scale, 0, 0)
-  ctx.fillStyle = paper
+  ctx.fillStyle = background
   ctx.fillRect(0, 0, W, H)
   for (const p of L.panels) L.under?.(ctx, p)
 
   for (const s of L.slots) {
     const src = shots[s.shot]
-    if (src) drawPhoto(ctx, src, s, scale, L.window, paper)
+    if (src) drawPhoto(ctx, src, s, scale, L.window, background)
     else drawWaiting(ctx, s, s.shot + 1, ink, L.centre)
   }
   // Outlines after every photo is down, so a heart outline isn't covered by the next photo.
@@ -675,7 +694,7 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
   }
 
   for (const p of L.panels) L.art?.(ctx, p)
-  if (L.cut) cutLine(ctx)
+  if (L.cut) cutLine(ctx, W, H)
   drawStickers(ctx, L, L.stickers)
 
   // Caption and date sit centred in each caption band.

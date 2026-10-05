@@ -1,5 +1,5 @@
 // Selfie booth: live camera shown as printer dots, a 3-2-1 countdown per pose, review, print.
-import { COUNTS, H, PATTERNS, W, render, shotCount } from './label.js'
+import { COUNTS, PAPERS, PATTERNS, paperCounts, paperSize, render, shotCount } from './label.js'
 
 const $ = (id) => document.getElementById(id)
 
@@ -17,6 +17,7 @@ const saved = (key, options, fallback) => (options[localStorage.getItem(key)] ? 
 const settings = {
   count: saved('booth:count', COUNTS, 'one'),
   pattern: saved('booth:pattern', PATTERNS, 'plain'),
+  paper: saved('booth:paper', PAPERS, '4x6'),
   // Captions: 'guest' (each guest types one in step 3) or 'event' (one caption set in Settings).
   captionMode: localStorage.getItem('booth:captionMode') === 'event' ? 'event' : 'guest',
   eventCaption: localStorage.getItem('booth:eventCaption') ?? '',
@@ -209,7 +210,7 @@ function backToLive() {
 function backToStart() {
   backToLive()
   resetCaption()
-  showStep('count')
+  showStep(steps()[0])
 }
 
 const eventMode = () => settings.captionMode === 'event'
@@ -223,7 +224,13 @@ function resetCaption() {
 // Step 3 is for the caption and, on Plain, doodling. With one caption for everyone it only appears
 // on Plain, so there's something to draw on.
 const canDoodle = () => settings.pattern === 'plain'
-const steps = () => (eventMode() && !canDoodle() ? ['count', 'pattern', 'live'] : ['count', 'pattern', 'caption', 'live'])
+// Step 1 only appears when the paper fits more than one photo count.
+const steps = () => [
+  ...(paperCounts(settings.paper).length > 1 ? ['count'] : []),
+  'pattern',
+  ...(eventMode() && !canDoodle() ? [] : ['caption']),
+  'live',
+]
 function stepTitle(step) {
   if (step !== 'caption') return { count: 'How many photos?', pattern: 'Pick a pattern', live: 'Smile!' }[step]
   if (!canDoodle()) return 'Add a caption'
@@ -236,6 +243,7 @@ function showStep(step) {
   document.body.dataset.doodle = canDoodle() ? 'on' : 'off'
   const all = steps()
   const heading = step === 'count' || step === 'pattern' ? $('pick-title') : $('step-title')
+  $('prev').style.visibility = all[0] === step ? 'hidden' : ''
   heading.innerHTML = `<span class="step-num">Step ${all.indexOf(step) + 1} of ${all.length}</span>${stepTitle(step)}`
   if (step === 'caption' && canDoodle() && !settings.doodle.length) message('Draw anywhere with your finger')
   else message('')
@@ -288,7 +296,7 @@ async function print() {
   $('print').disabled = $('retake').disabled = true
   try {
     const png = await new Promise((r) => canvas.toBlob(r, 'image/png'))
-    const res = await fetch('/print', { method: 'POST', body: png })
+    const res = await fetch(`/print?paper=${settings.paper}`, { method: 'POST', body: png })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(body.error ?? 'print failed')
     tone(660, 90); setTimeout(() => tone(990, 140), 110)
@@ -337,6 +345,35 @@ function syncControls() {
   $('mode-guest').setAttribute('aria-checked', String(!eventMode()))
   $('mode-event').setAttribute('aria-checked', String(eventMode()))
   $('event-caption').hidden = !eventMode()
+}
+
+/** The paper decides the label's shape: the preview and the tiles follow it. */
+function applyPaper() {
+  const { W, H } = paperSize(settings.paper)
+  // Only offer the photo counts that fit, and switch to one that does if needed.
+  const fits = paperCounts(settings.paper)
+  for (const t of $('count-tiles').children) t.hidden = !fits.includes(t.dataset.key)
+  if (!fits.includes(settings.count)) settings.count = fits[0]
+  document.body.style.setProperty('--label-ratio', `${W} / ${H}`)
+  document.body.style.setProperty('--label-tall', String(H / W))
+  for (const b of $('papers').children) b.setAttribute('aria-checked', String(b.dataset.key === settings.paper))
+  lastTiles = 0
+  rerender()
+}
+for (const [key, p] of Object.entries(PAPERS)) {
+  const b = document.createElement('button')
+  b.type = 'button'
+  b.className = 'choice'
+  b.role = 'radio'
+  b.textContent = p.name
+  b.dataset.key = key
+  b.onclick = () => {
+    settings.paper = key
+    localStorage.setItem('booth:paper', key)
+    applyPaper()
+    showStep(steps()[0]) // the steps can change: small papers skip "how many photos"
+  }
+  $('papers').append(b)
 }
 
 function setCaptionMode(mode) {
@@ -394,6 +431,7 @@ document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.prev
 
 function labelPoint(e) {
   const r = canvas.getBoundingClientRect()
+  const { W, H } = paperSize(settings.paper)
   return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]
 }
 let drawing = null
@@ -416,7 +454,10 @@ canvas.addEventListener('pointerup', endStroke)
 canvas.addEventListener('pointercancel', endStroke)
 $('undo').onclick = () => { settings.doodle.pop(); rerender() }
 $('clear').onclick = () => { settings.doodle = []; rerender() }
-$('prev').onclick = () => showStep('count')
+$('prev').onclick = () => {
+  const all = steps()
+  showStep(all[Math.max(0, all.indexOf(state) - 1)])
+}
 $('next').onclick = next
 $('settings').onclick = () => {
   const open = $('host').hidden
@@ -443,8 +484,9 @@ async function pollStatus() {
 
 buildTiles('count', COUNTS)
 buildTiles('pattern', PATTERNS)
+applyPaper()
 resetCaption()
-showStep('count')
+showStep(steps()[0])
 syncControls()
 pollStatus()
 setInterval(pollStatus, 5000)

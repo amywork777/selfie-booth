@@ -68,6 +68,9 @@ On the iPad, tap **Settings** in the top corner of the booth:
 
 - **Captions:** let each guest write their own, or pick **Same for everyone** and type the event
   name (like "amy's 30th").
+- **Paper:** pick what's loaded in the printer: 4 x 6 labels (the usual), a 4 x 6 continuous roll, or
+  4 x 4, 4 x 3, 4 x 2 or 3 x 2 labels. The small 4 x 2 and 3 x 2 labels fit one photo, so guests skip
+  the "how many photos" step.
 - Turn the date and sound on or off.
 
 Tip: turn on **Guided Access** (iPad Settings, Accessibility) so guests can't leave the booth.

@@ -136,15 +136,17 @@ class Booth(BaseHTTPRequestHandler):
             size = min(int(self.headers.get("Content-Length", 0)), 4096)
             print("ipad:", self.rfile.read(size).decode(errors="replace"))
             return self.reply(204)
-        if self.path != "/print":
+        path, _, query = self.path.partition("?")
+        if path != "/print":
             return self.reply(404)
+        paper = dict(p.split("=", 1) for p in query.split("&") if "=" in p).get("paper", "4x6")
         size = int(self.headers.get("Content-Length", 0))
         if not 0 < size <= MAX_UPLOAD:
             return self.reply(413, b'{"error":"photo too large"}')
         try:
             img = Image.open(io.BytesIO(self.rfile.read(size)))
             # The page sends a finished, already dithered label: print it dot for dot.
-            printer.send(label(img, dither=False))
+            printer.send(label(img, dither=False, paper=paper))
             self.reply(200, b'{"ok":true}')
         except PrinterNotFound as e:
             self.reply(503, json.dumps({"error": str(e)}).encode())
