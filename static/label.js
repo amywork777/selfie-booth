@@ -60,9 +60,10 @@ export const PATTERNS = {
   hearts: {
     name: 'Hearts',
     stickers: 'hearts',
-    inset: inset(92),
+    inset: inset(78),
     // Each photo is cut into a heart, with a bold heart outline.
     window: heartWindow,
+    centre: heartCentre,
     outline: (ctx, s, k) => {
       ctx.beginPath()
       heartWindow(ctx, s)
@@ -308,12 +309,22 @@ function sketchRect(ctx, s, k) {
   pen(ctx, pts.map(([x, y]) => [x + 5 * k, y + 4 * k]), rand, 9 * k, true)
 }
 
+/** The heart's box: as big as fits in the slot, a little taller than wide. */
+function heartBox(s) {
+  const w = Math.min(s.w, s.h / 1.12)
+  const h = w * 1.12
+  return { x: s.x + (s.w - w) / 2, y: s.y + (s.h - h) / 2, w, h }
+}
+
+/** Where the heart looks centred: a little above the middle of its box, between the lobes and the point. */
+function heartCentre(s) {
+  const b = heartBox(s)
+  return [b.x + b.w / 2, b.y + b.h * 0.47]
+}
+
 /** Add a heart, as big as fits centred in the slot, to the current path. */
 function heartWindow(ctx, s) {
-  // Taller than wide, so a face and shoulders fit in the point.
-  const w = Math.min(s.w, s.h / 1.2) * 0.98
-  const h = w * 1.2
-  const x = s.x + (s.w - w) / 2, y = s.y + (s.h - h) / 2
+  const { x, y, w, h } = heartBox(s)
   const top = h * 0.26
   ctx.moveTo(x + w / 2, y + top)
   ctx.bezierCurveTo(x + w / 2, y, x, y, x, y + top)
@@ -513,12 +524,15 @@ function drawPhoto(ctx, src, s, scale, window, paper) {
 }
 
 /** An empty slot waiting for its pose: the pose number, big and dotted. */
-function drawWaiting(ctx, s, n, ink) {
+function drawWaiting(ctx, s, n, ink, centre) {
+  const [cx, cy] = centre ? centre(s) : [s.x + s.w / 2, s.y + s.h / 2]
   ctx.fillStyle = ink
   ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = `900 ${Math.round(Math.min(s.w, s.h) * 0.45)}px Doto, "Helvetica Neue", sans-serif`
-  ctx.fillText(String(n), s.x + s.w / 2, s.y + s.h / 2)
+  ctx.textBaseline = 'alphabetic'
+  ctx.font = `900 ${Math.round(Math.min(s.w, s.h) * 0.42)}px Doto, "Helvetica Neue", sans-serif`
+  // Centre on the digit's drawn ink, not the font's line box, which sits it off-centre.
+  const m = ctx.measureText(String(n))
+  ctx.fillText(String(n), cx, cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2)
 }
 
 function fitSize(ctx, text, maxWidth, max) {
@@ -554,7 +568,7 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
   for (const s of L.slots) {
     const src = shots[s.shot]
     if (src) drawPhoto(ctx, src, s, scale, L.window, paper)
-    else drawWaiting(ctx, s, s.shot + 1, ink)
+    else drawWaiting(ctx, s, s.shot + 1, ink, L.centre)
   }
   // Outlines after every photo is down, so a heart outline isn't covered by the next photo.
   for (const s of L.slots) {
