@@ -12,13 +12,13 @@ from cadgen import srgb, step
 
 from box_dims import (
     D, DIVIDER_X, FINGER, H, INSERT_HOLE, IPAD_CORNER_R, IPAD_CX, IPAD_CZ, IPAD_FRAME, IPAD_H, WINDOW_H, WINDOW_W,
-    IPAD_T, IPAD_W, LABELS_D, LABELS_H, LABELS_W, MAC_D, MAC_H, MAC_W, POST, POST_LAYERS, PRINTER_CX,
+    IPAD_T, IPAD_W, LABELS_D, LABELS_H, LABELS_W, MBP_D, MBP_H, MBP_W, POST, POST_LAYERS, PRINTER_CX,
     PRINTER_D, PRINTER_H, PRINTER_W, PRINTER_Y0, PRINTER_ZONE_X0, PRINTER_ZONE_X1,
-    SHELF_Z, SIGN_CZ, SIGN_D, SLOT_BEZEL, SLOT_W, SLOT_Z0, SLOT_Z1, T, THUMB_SCREW_HOLE, W,
+    BAY_Z0, DECK_TOP, SIGN_CZ, SIGN_D, SLOT_BEZEL, SLOT_W, SLOT_Z0, SLOT_Z1, T, THUMB_SCREW_HOLE, W,
 )
 from panels import heart, text
 
-TAB = 30.0  # tab length for divider and shelf tabs
+TAB = 30.0  # tab length for the divider's and deck's tabs
 POCKET_MARGIN = 14.0  # plywood round the iPad in the pocket plate
 IPAD_FIT = 0.6  # clearance round the iPad in its pocket
 
@@ -83,24 +83,23 @@ def make_parts():
                  ("bottom", "left"), ("bottom", "right"), ("top", "left"), ("top", "right")]:
         finger_joint(parts, a, b)
 
-    # Divider between the iPad side and the printer side, and the printer shelf.
-    parts["divider"] = box(DIVIDER_X, DIVIDER_X + T, T, D - T, T, H - T)
-    parts["shelf"] = box(PRINTER_ZONE_X0, PRINTER_ZONE_X1, T, D - T, SHELF_Z, SHELF_Z + T)
-    # Through-tabs: the divider's tabs go through slots in the top and bottom; the shelf's tabs go
-    # through slots in the divider and the right wall.
+    # Deck across the whole box over the MacBook's bay; its tabs go through slots in both side walls.
+    parts["deck"] = box(T, W - T, T, D - T, BAY_Z0, DECK_TOP)
+    for x0 in (0, W - T):
+        for y in (D * 0.3, D * 0.7):
+            tab = box(x0, x0 + T, y - TAB / 2, y + TAB / 2, BAY_Z0, DECK_TOP)
+            parts["deck"] = parts["deck"] + tab
+            parts["left" if x0 == 0 else "right"] = parts["left" if x0 == 0 else "right"] - tab
+    # Cable holes down to the MacBook, at the back of each side: the iPad's and the printer's cables.
+    for cx in (IPAD_CX, PRINTER_CX):
+        parts["deck"] = parts["deck"] - box(cx - 22, cx + 22, D - T - 40, D - T - 12, BAY_Z0 - 1, DECK_TOP + 1)
+
+    # Divider between the iPad side and the printer side, standing on the deck; the top glues onto it.
+    parts["divider"] = box(DIVIDER_X, DIVIDER_X + T, T, D - T, DECK_TOP, H - T)
     for y in (D * 0.3, D * 0.7):
-        # Through the bottom only: the top stays a clean surface, glued onto the divider's top edge.
-        tab = box(DIVIDER_X, DIVIDER_X + T, y - TAB / 2, y + TAB / 2, 0, T)
+        tab = box(DIVIDER_X, DIVIDER_X + T, y - TAB / 2, y + TAB / 2, BAY_Z0, DECK_TOP)
         parts["divider"] = parts["divider"] + tab
-        parts["bottom"] = parts["bottom"] - tab
-    for slotted in ("divider", "right"):
-        x0 = DIVIDER_X if slotted == "divider" else W - T
-        tabs = [box(x0, x0 + T, y - TAB / 2, y + TAB / 2, SHELF_Z, SHELF_Z + T) for y in (D * 0.3, D * 0.7)]
-        for t in tabs:
-            parts["shelf"] = parts["shelf"] + t
-            parts[slotted] = parts[slotted] - t
-    # Cable pass-through in the divider, low at the back, for the iPad's charging cable.
-    parts["divider"] = parts["divider"] - box(DIVIDER_X - 1, DIVIDER_X + T + 1, D - 90, D - 20, T + 10, T + 50)
+        parts["deck"] = parts["deck"] - tab
 
     # Front: iPad window and print slot.
     parts["front"] = parts["front"] - front_sketch_features()
@@ -166,11 +165,18 @@ def make_parts():
     back = back - bd.extrude(vents.sketch, amount=-(D + 1))
     parts["back"] = back
 
-    # Air for the Mac mini: hearts in the right wall beside it (the box sits flat on the table).
+    # Air for the closed MacBook: small hearts low in both side walls and along the bottom of the back.
     with bd.BuildSketch(bd.Plane.YZ) as side_vents:
-        for i, y in enumerate((T + 45, T + 93, T + 141)):
-            bd.add(heart(y, T + 26 + (4 if i % 2 else 0), 30))
-    parts["right"] = parts["right"] - bd.extrude(side_vents.sketch, amount=W + 1)
+        for i, y in enumerate(range(40, int(D - 40), 34)):
+            bd.add(heart(y, T + 10 + (2 if i % 2 else 0), 16))
+    side_cut = bd.extrude(side_vents.sketch, amount=W + 1)
+    parts["left"] = parts["left"] - side_cut
+    parts["right"] = parts["right"] - side_cut
+    with bd.BuildSketch(bd.Plane.XZ) as back_vents:
+        for i, x in enumerate(range(40, int(W - 30), 30)):
+            if abs(x - PRINTER_CX) > 40:  # leave the cord notch alone
+                bd.add(heart(x, T + 10 + (2 if i % 2 else 0), 16))
+    parts["back"] = parts["back"] - bd.extrude(back_vents.sketch, amount=-(D + 1))
 
     return parts
 
@@ -178,20 +184,20 @@ def make_parts():
 def standins():
     """Not parts: the things that go inside, for checking fit."""
     ix0, ix1, iy0, iy1, iz0, iz1 = ipad_box()
-    shelf_top = SHELF_Z + T
+    deck_top = DECK_TOP
     return {
-        "rollo_standin": box(PRINTER_CX - PRINTER_W / 2, PRINTER_CX + PRINTER_W / 2, PRINTER_Y0, PRINTER_Y0 + PRINTER_D, shelf_top, shelf_top + PRINTER_H),
-        "labels_standin": box(PRINTER_CX - LABELS_W / 2, PRINTER_CX + LABELS_W / 2, PRINTER_Y0 + PRINTER_D + 6, PRINTER_Y0 + PRINTER_D + 6 + LABELS_D, shelf_top, shelf_top + LABELS_H),
-        "mac_mini_standin": box(PRINTER_CX - MAC_W / 2, PRINTER_CX + MAC_W / 2, T + 30, T + 30 + MAC_D, T, T + MAC_H),
+        "rollo_standin": box(PRINTER_CX - PRINTER_W / 2, PRINTER_CX + PRINTER_W / 2, PRINTER_Y0, PRINTER_Y0 + PRINTER_D, deck_top, deck_top + PRINTER_H),
+        "labels_standin": box(PRINTER_CX - LABELS_W / 2, PRINTER_CX + LABELS_W / 2, PRINTER_Y0 + PRINTER_D + 6, PRINTER_Y0 + PRINTER_D + 6 + LABELS_D, deck_top, deck_top + LABELS_H),
+        "macbook_standin": box(W / 2 - MBP_W / 2, W / 2 + MBP_W / 2, T + 10, T + 10 + MBP_D, T, T + MBP_H),
         "ipad_standin": box(ix0, ix1, iy0, iy1, iz0, iz1),
     }
 
 
 COLOURS = {
     "front": "#E9C9A0", "back": "#D9B68A", "left": "#E2BF93", "right": "#E2BF93", "top": "#EDD0A8",
-    "bottom": "#D4AE80", "divider": "#CFA676", "shelf": "#CFA676", "ipad_pocket": "#C99D6B",
+    "bottom": "#D4AE80", "divider": "#CFA676", "deck": "#CFA676", "ipad_pocket": "#C99D6B",
     "ipad_backing": "#C29462", "slot_bezel": "#F0D7B4", "sign_disc": "#F7EBC8", "posts": "#B98A58",
-    "ipad_frame": "#F0D7B4", "rollo_standin": "#F2F2F2", "labels_standin": "#FFFFFF", "mac_mini_standin": "#B8BCC2",
+    "ipad_frame": "#F0D7B4", "rollo_standin": "#F2F2F2", "labels_standin": "#FFFFFF", "macbook_standin": "#B8BCC2",
     "ipad_standin": "#2B2B2E",
 }
 

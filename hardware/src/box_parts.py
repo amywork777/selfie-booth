@@ -2,7 +2,7 @@
 engraving lands on the outside and reads the right way round. CUT layer cuts, ENGRAVE engraves.
 
 Cut list (6 mm plywood):
-  front, back, left, right, top, bottom, divider, shelf, ipad_pocket, ipad_backing,
+  front, back, left, right, top, bottom, deck, divider, ipad_pocket, ipad_backing,
   ipad_frame, slot_bezel, sign_disc: 1 each
   post_layer: 12 (3 per corner post, 4 posts)
 """
@@ -118,9 +118,9 @@ def divider():
     return plain("divider")
 
 
-@dxf(out="../DXF/box/shelf.dxf")
-def shelf():
-    return plain("shelf")
+@dxf(out="../DXF/box/deck.dxf")
+def deck():
+    return plain("deck")
 
 
 @dxf(out="../DXF/box/post_layer.dxf")
@@ -133,6 +133,6 @@ def post_layer():
 
 
 if __name__ == "__main__":
-    for model in (front, back, left, right, top, bottom, divider, shelf, ipad_pocket, ipad_backing,
+    for model in (front, back, left, right, top, bottom, deck, divider, ipad_pocket, ipad_backing,
                   ipad_frame, slot_bezel, sign_disc, post_layer):
         model()

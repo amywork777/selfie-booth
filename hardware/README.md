@@ -8,11 +8,17 @@ Two designs:
 
 ## Laser-cut box
 
-A 393 x 270 x 265 mm finger-jointed box in 6 mm (1/4 in) plywood. Inside: the iPad mini behind a
-window on the left, the Rollo on a shelf behind the print slot on the right with its labels behind
-it, and a 2024 Mac mini on the floor under the shelf. The back comes off with four thumb screws; the
-power cords leave through a notch in it. It sits flat on the table, with vents in the side by the Mac
-mini. Every piece cuts on a Glowforge in one go.
+A 393 x 270 x 265 mm finger-jointed box in 6 mm (1/4 in) plywood. A 14 in MacBook Pro lies closed in
+a bay across the bottom; a deck over it carries the iPad mini behind a window on the left and the
+Rollo behind the print slot on the right, with its labels behind it. The back comes off with four
+thumb screws (the MacBook slides out that way), and the power cords leave through a notch in it. Small
+heart vents run low along both sides and the back for the MacBook. Every piece cuts on a Glowforge
+in one go.
+
+**Keeping the MacBook awake with its lid closed:** a closed MacBook sleeps unless it's in Apple's
+"clamshell mode", which needs its charger connected and a display attached. Plug a **HDMI dummy plug**
+(about $8, "4K HDMI headless display emulator") into its HDMI port and keep the charger in. Then do the
+one-time "Start Automatically" setup from START HERE with the lid open, close it, and it keeps running.
 
 **Cut files** (`DXF/box/`, `CUT` layer cuts, `ENGRAVE` layer engraves):
 
@@ -21,11 +27,11 @@ mini. Every piece cuts on a Glowforge in one go.
 | front | 1 | iPad window (the whole iPad face shows, camera included) and print slot |
 | ipad_frame | 1 | raised frame glued round the window; "selfie booth" engraved along its top |
 | back | 1 | thumb-screw holes, cord notch, heart vents |
-| left, right | 1 each | finger joints; right has the shelf's tab slots and heart vents by the Mac mini |
+| left, right | 1 each | finger joints, slots for the deck's tabs, low heart vents for the MacBook |
 | top | 1 | plain: glued onto the divider's top edge |
-| bottom | 1 | the box sits flat on the table |
-| divider | 1 | between the iPad and printer sides; cable pass-through for the iPad's charger |
-| shelf | 1 | the printer and its labels sit on it |
+| bottom | 1 | the box sits flat on the table; the MacBook lies on it |
+| deck | 1 | over the MacBook's bay; the iPad side, printer and labels stand on it; cable holes down |
+| divider | 1 | between the iPad and printer sides, standing on the deck |
 | ipad_pocket | 1 | glue to the back of the front panel, round the window |
 | ipad_backing | 1 | screws to the pocket and holds the iPad in |
 | slot_bezel | 1 | glue round the print slot on the front |
@@ -34,20 +40,21 @@ mini. Every piece cuts on a Glowforge in one go.
 
 **Also needed:** wood glue; 4 x M4 thumb screws (about 12 mm) and 4 x M4 threaded inserts for wood;
 4 x small wood screws (M3 x 10 or #4 x 3/8 in) for the iPad backing; a right-angle USB-C cable for the
-iPad; a USB-C to USB-A adapter for the printer cable (the M4 Mac mini has USB-C only).
+iPad; a USB-C to USB-A adapter for the printer cable; an HDMI dummy plug for the MacBook.
 
 **Assembly:**
 
 1. Glue the iPad pocket to the back of the front panel, centred on the window. Glue the iPad frame,
    the slot bezel and the round sign to the front.
-2. Glue the box together: front, bottom, sides and top, with the divider and shelf tabbed in. Leave
-   the back off.
+2. Glue the box together: front, bottom, sides, the deck (tabbed through the sides), the divider
+   (tabbed into the deck), then the top. Leave the back off.
 3. Glue up the four corner posts (3 layers each). Press an M4 insert into each post and glue the posts
    into the back corners.
-4. Put the iPad face down in its pocket, run its cable through the divider, and screw the backing
+4. Put the iPad face down in its pocket, run its cable down through the deck, and screw the backing
    plate on.
-5. Mac mini on the floor of the right side, printer on the shelf pushed to the front, labels behind it
-   feeding into the printer. Plug in, cords out through the back notch.
+5. Slide the MacBook (lid closed, dummy plug in) into the bay from the back. Printer on the deck pushed
+   to the front, labels behind it feeding into the printer. Cables down through the deck holes to the
+   MacBook, cords out through the back notch.
 6. Thumb-screw the back on.
 
 **Before cutting:** measure the printer (published size: 195 x 75 x 85 mm), and with it standing on a

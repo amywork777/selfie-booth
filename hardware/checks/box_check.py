@@ -15,7 +15,7 @@ from cadgen import geometry  # noqa: E402
 from ezdxf import bbox as dxf_bbox  # noqa: E402
 
 from box_dims import (  # noqa: E402
-    CAMERA_FROM_TOP, IPAD_CX, IPAD_CZ, IPAD_H, IPAD_W, LABEL_EXIT_Z, PRINTER_CX, SHELF_Z, SLOT_W, SLOT_Z0, SLOT_Z1, T,
+    CAMERA_FROM_TOP, IPAD_CX, IPAD_CZ, IPAD_H, IPAD_W, LABEL_EXIT_Z, MBP_H, PRINTER_CX, BAY_Z0, DECK_TOP, SLOT_W, SLOT_Z0, SLOT_Z1, T,
     WINDOW_H, WINDOW_W,
 )
 
@@ -56,11 +56,12 @@ gap_front = pr.min.Y - T
 check("printer front sits just behind the front panel", 0 < gap_front <= 5, f"{gap_front:.1f} mm")
 check("print slot is centred on the printer", abs((pr.min.X + pr.max.X) / 2 - PRINTER_CX) < 0.5)
 check("slot is wide enough for a 4.1 in label", SLOT_W >= 104.1 + 10, f"{SLOT_W:.0f} mm")
-exit_z = pr.min.Z + LABEL_EXIT_Z  # where the label leaves the printer, sitting on the shelf
+exit_z = pr.min.Z + LABEL_EXIT_Z  # where the label leaves the printer, sitting on the deck
 check("slot is centred on the printer's label exit", abs((SLOT_Z0 + SLOT_Z1) / 2 - exit_z) < 0.5, f"exit {exit_z:.0f} mm, slot {SLOT_Z0:.0f}-{SLOT_Z1:.0f} mm")
-check("printer sits on the shelf", abs(pr.min.Z - (SHELF_Z + T)) < 0.01)
-mac, shelf = P["mac_mini_standin"].bounding_box(), P["shelf"].bounding_box()
-check("air above the Mac mini", shelf.min.Z - mac.max.Z >= 5, f"{shelf.min.Z - mac.max.Z:.1f} mm")
+check("printer sits on the deck", abs(pr.min.Z - DECK_TOP) < 0.01)
+mac, deck = P["macbook_standin"].bounding_box(), P["deck"].bounding_box()
+check("air above the MacBook", deck.min.Z - mac.max.Z >= 5, f"{deck.min.Z - mac.max.Z:.1f} mm")
+check("MacBook slides out the back (nothing behind it but the back panel)", mac.max.Y < P["back"].bounding_box().min.Y, f"{P['back'].bounding_box().min.Y - mac.max.Y:.0f} mm spare")
 check("iPad can't come out the front (window smaller than the iPad)", WINDOW_W < IPAD_W and WINDOW_H < IPAD_H, f"{WINDOW_W:.1f} x {WINDOW_H:.1f} window, {IPAD_W} x {IPAD_H} iPad")
 check("most of the iPad face shows", WINDOW_W * WINDOW_H / (IPAD_W * IPAD_H) > 0.9, f"{100 * WINDOW_W * WINDOW_H / (IPAD_W * IPAD_H):.0f}%")
 # The camera hole must be over the camera.
