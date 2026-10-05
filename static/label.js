@@ -77,15 +77,15 @@ export const PATTERNS = {
   polka: {
     name: 'Polka dot',
     stickers: 'none',
-    inset: inset(100),
+    inset: inset(128),
     stroke: 8,
     under(ctx, p) {
       // Soft dots: big grey ones and small black ones in staggered rows, then a scalloped card.
       const { frame: f, k } = p
       const grey = halftone(ctx, 'mid')
       clipTo(ctx, f, () => {
-        for (let row = 0, y = f.y + 10 * k; y < f.y + f.h + 60; row++, y += 50 * k) {
-          for (let col = 0, x = f.x + (row % 2 ? 30 * k : 0); x < f.x + f.w + 60; col++, x += 60 * k) {
+        for (let row = 0, y = f.y + 10 * k; y < f.y + f.h + 60; row++, y += 44 * k) {
+          for (let col = 0, x = f.x + (row % 2 ? 26 * k : 0); x < f.x + f.w + 60; col++, x += 52 * k) {
             const big = (row + col) % 2 === 0
             ctx.beginPath()
             ctx.arc(x, y, (big ? 15 : 7) * k, 0, Math.PI * 2)
