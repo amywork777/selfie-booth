@@ -53,6 +53,7 @@ export const COUNTS = {
 // inside a panel (the whole label, or one twin strip); `k` shrinks the border for narrow panels.
 
 const inset = (t, r = t, b = t, l = r) => ({ t, r, b, l })
+const GUTTER = 28
 
 export const PATTERNS = {
   plain: { name: 'Plain', stickers: 'none', inset: inset(36), stroke: 12 },
@@ -107,7 +108,9 @@ export const PATTERNS = {
 export function layout(count, pattern) {
   const P = PATTERNS[pattern] ?? PATTERNS.plain
   const C = COUNTS[count] ?? COUNTS.one
-  const frames = C.halves ? [{ x: 0, y: 0, w: W / 2, h: H }, { x: W / 2, y: 0, w: W / 2, h: H }] : [{ x: 0, y: 0, w: W, h: H }]
+  // Twin strips leave a white gutter down the middle for the cut line.
+  const half = (W - GUTTER) / 2
+  const frames = C.halves ? [{ x: 0, y: 0, w: half, h: H }, { x: W - half, y: 0, w: half, h: H }] : [{ x: 0, y: 0, w: W, h: H }]
   const panels = frames.map((frame) => {
     const k = C.halves ? 0.6 : 1
     const i = P.inset
@@ -126,6 +129,33 @@ export function layout(count, pattern) {
 
 /** How many photos a count needs. */
 export const shotCount = (count) => ({ one: 1, two: 2, four: 4, twin: 4 })[count] ?? 1
+
+/** Bold dashed line down the gutter between twin strips, with scissors at the top. */
+function cutLine(ctx) {
+  const x = W / 2
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(x - GUTTER / 2, 0, GUTTER, H)
+  ctx.fillStyle = '#000'
+  for (let y = 70; y < H - 10; y += 34) ctx.fillRect(x - 2, y, 4, 20)
+  // Scissors pointing down the line: two ring handles and two crossed blades.
+  ctx.save()
+  ctx.translate(x, 34)
+  ctx.lineWidth = 4
+  ctx.strokeStyle = '#000'
+  for (const side of [-1, 1]) {
+    ctx.beginPath()
+    ctx.arc(side * 7, -14, 6, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(side * 5, -8)
+    ctx.lineTo(-side * 4, 22)
+    ctx.lineTo(-side * 1, 22)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+  }
+  ctx.restore()
+}
 
 function clipTo(ctx, r, draw) {
   ctx.save()
@@ -373,11 +403,7 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
   }
 
   for (const p of L.panels) L.art?.(ctx, p)
-  if (L.cut) {
-    // Dashed cut line on the seam between the twin strips, in the gap between their borders.
-    ctx.fillStyle = ink
-    for (let y = 8; y < H; y += 32) ctx.fillRect(W / 2 - 1, y, 2, 14)
-  }
+  if (L.cut) cutLine(ctx)
   drawStickers(ctx, L, L.stickers)
 
   // Caption and date sit centred in each caption band.
