@@ -15,7 +15,8 @@ from cadgen import geometry  # noqa: E402
 from ezdxf import bbox as dxf_bbox  # noqa: E402
 
 from box_dims import (  # noqa: E402
-    CAMERA_FROM_TOP, IPAD_CX, IPAD_CZ, IPAD_H, IPAD_W, PRINTER_CX, SCREEN_W, SLOT_W, SLOT_Z0, SLOT_Z1, T,
+    CAMERA_FROM_TOP, IPAD_CX, IPAD_CZ, IPAD_H, IPAD_W, LABEL_EXIT_Z, PRINTER_CX, SHELF_Z, SLOT_W, SLOT_Z0, SLOT_Z1, T,
+    WINDOW_H, WINDOW_W,
 )
 
 failures = []
@@ -31,7 +32,7 @@ b = bd.import_step("STEP/box.step")
 P = {c.label: c for c in b.children}
 wood = [k for k in P if not k.endswith("standin")]
 stand = [k for k in P if k.endswith("standin")]
-multi = {"posts": 4, "feet": 4}  # assemblies of separate glued-up pieces
+multi = {"posts": 4}  # four separate glued-up corner posts
 
 
 def overlap(a, c):
@@ -55,14 +56,17 @@ gap_front = pr.min.Y - T
 check("printer front sits just behind the front panel", 0 < gap_front <= 5, f"{gap_front:.1f} mm")
 check("print slot is centred on the printer", abs((pr.min.X + pr.max.X) / 2 - PRINTER_CX) < 0.5)
 check("slot is wide enough for a 4.1 in label", SLOT_W >= 104.1 + 10, f"{SLOT_W:.0f} mm")
-check("slot spans the top of the printer, where the label leaves", SLOT_Z0 < pr.max.Z < SLOT_Z1, f"printer top {pr.max.Z:.0f}, slot {SLOT_Z0:.0f}-{SLOT_Z1:.0f}")
+exit_z = pr.min.Z + LABEL_EXIT_Z  # where the label leaves the printer, sitting on the shelf
+check("slot is centred on the printer's label exit", abs((SLOT_Z0 + SLOT_Z1) / 2 - exit_z) < 0.5, f"exit {exit_z:.0f} mm, slot {SLOT_Z0:.0f}-{SLOT_Z1:.0f} mm")
+check("printer sits on the shelf", abs(pr.min.Z - (SHELF_Z + T)) < 0.01)
 mac, shelf = P["mac_mini_standin"].bounding_box(), P["shelf"].bounding_box()
 check("air above the Mac mini", shelf.min.Z - mac.max.Z >= 5, f"{shelf.min.Z - mac.max.Z:.1f} mm")
-check("iPad can't come out the front (window narrower than the iPad)", SCREEN_W + 1 < IPAD_W, f"{SCREEN_W + 1:.1f} < {IPAD_W} mm")
+check("iPad can't come out the front (window smaller than the iPad)", WINDOW_W < IPAD_W and WINDOW_H < IPAD_H, f"{WINDOW_W:.1f} x {WINDOW_H:.1f} window, {IPAD_W} x {IPAD_H} iPad")
+check("most of the iPad face shows", WINDOW_W * WINDOW_H / (IPAD_W * IPAD_H) > 0.9, f"{100 * WINDOW_W * WINDOW_H / (IPAD_W * IPAD_H):.0f}%")
 # The camera hole must be over the camera.
 cam = bd.Cylinder(1, 3 * T, rotation=(90, 0, 0)).moved(bd.Location((IPAD_CX, T / 2, IPAD_CZ + IPAD_H / 2 - CAMERA_FROM_TOP)))
 v = geometry.overlap_volume(cam.solids()[0], P["front"].solids()[0])
-check("front panel is open over the iPad's camera", v < 0.01, f"{v:.2f} mm3 of wood in the way")
+check("front panel and frame are open over the iPad's camera", v < 0.01 and geometry.overlap_volume(cam.moved(bd.Location((0, -T, 0))).solids()[0], P["ipad_frame"].solids()[0]) < 0.01, f"{v:.2f} mm3 of wood in the way")
 
 # 4. Every cut file fits the Glowforge bed (495 x 279 mm).
 for f in sorted(glob.glob("DXF/box/*.dxf")):

@@ -11,15 +11,14 @@ from cadgen import build123d as bd
 from cadgen import srgb, step
 
 from box_dims import (
-    CAMERA_FROM_TOP, D, DIVIDER_X, FINGER, FOOT_D, FOOT_LAYERS, H, INSERT_HOLE, IPAD_CX, IPAD_CZ, IPAD_H,
+    D, DIVIDER_X, FINGER, H, INSERT_HOLE, IPAD_CORNER_R, IPAD_CX, IPAD_CZ, IPAD_FRAME, IPAD_H, WINDOW_H, WINDOW_W,
     IPAD_T, IPAD_W, LABELS_D, LABELS_H, LABELS_W, MAC_D, MAC_H, MAC_W, POST, POST_LAYERS, PRINTER_CX,
-    PRINTER_D, PRINTER_H, PRINTER_W, PRINTER_Y0, PRINTER_ZONE_X0, PRINTER_ZONE_X1, SCREEN_H, SCREEN_R,
-    SCREEN_W, SHELF_Z, SIGN_CZ, SIGN_D, SLOT_BEZEL, SLOT_W, SLOT_Z0, SLOT_Z1, T, THUMB_SCREW_HOLE, W,
+    PRINTER_D, PRINTER_H, PRINTER_W, PRINTER_Y0, PRINTER_ZONE_X0, PRINTER_ZONE_X1,
+    SHELF_Z, SIGN_CZ, SIGN_D, SLOT_BEZEL, SLOT_W, SLOT_Z0, SLOT_Z1, T, THUMB_SCREW_HOLE, W,
 )
 from panels import heart, text
 
 TAB = 30.0  # tab length for divider and shelf tabs
-TOP_SIGN_W, TOP_SIGN_H, TOP_SIGN_Y = 230.0, 62.0, 40.0  # event sign standing on top
 POCKET_MARGIN = 14.0  # plywood round the iPad in the pocket plate
 IPAD_FIT = 0.6  # clearance round the iPad in its pocket
 
@@ -62,12 +61,10 @@ def ipad_box():
 
 
 def front_sketch_features():
-    """Window, camera hole and print slot, as solids to cut through the front panel."""
+    """iPad window and print slot, as solids to cut through the front panel."""
     with bd.BuildSketch(bd.Plane.XZ) as cuts:
         with bd.Locations((IPAD_CX, IPAD_CZ)):
-            bd.RectangleRounded(SCREEN_W + 1, SCREEN_H + 1, SCREEN_R)  # a hair bigger than the lit screen
-        with bd.Locations((IPAD_CX, IPAD_CZ + IPAD_H / 2 - CAMERA_FROM_TOP)):
-            bd.Circle(5.0)
+            bd.RectangleRounded(WINDOW_W, WINDOW_H, IPAD_CORNER_R - 2.5)
         with bd.Locations((PRINTER_CX, (SLOT_Z0 + SLOT_Z1) / 2)):
             bd.RectangleRounded(SLOT_W, SLOT_Z1 - SLOT_Z0, 8)
     # Plane.XZ's normal points to -Y; extrude back through the panel.
@@ -92,10 +89,10 @@ def make_parts():
     # Through-tabs: the divider's tabs go through slots in the top and bottom; the shelf's tabs go
     # through slots in the divider and the right wall.
     for y in (D * 0.3, D * 0.7):
-        for z0 in (0, H - T):
-            tab = box(DIVIDER_X, DIVIDER_X + T, y - TAB / 2, y + TAB / 2, z0, z0 + T)
-            parts["divider"] = parts["divider"] + tab
-            parts["bottom" if z0 == 0 else "top"] = parts["bottom" if z0 == 0 else "top"] - tab
+        # Through the bottom only: the top stays a clean surface, glued onto the divider's top edge.
+        tab = box(DIVIDER_X, DIVIDER_X + T, y - TAB / 2, y + TAB / 2, 0, T)
+        parts["divider"] = parts["divider"] + tab
+        parts["bottom"] = parts["bottom"] - tab
     for slotted in ("divider", "right"):
         x0 = DIVIDER_X if slotted == "divider" else W - T
         tabs = [box(x0, x0 + T, y - TAB / 2, y + TAB / 2, SHELF_Z, SHELF_Z + T) for y in (D * 0.3, D * 0.7)]
@@ -105,7 +102,7 @@ def make_parts():
     # Cable pass-through in the divider, low at the back, for the iPad's charging cable.
     parts["divider"] = parts["divider"] - box(DIVIDER_X - 1, DIVIDER_X + T + 1, D - 90, D - 20, T + 10, T + 50)
 
-    # Front: window, camera hole, slot.
+    # Front: iPad window and print slot.
     parts["front"] = parts["front"] - front_sketch_features()
 
     # iPad pocket plate (glued to the back of the front panel) and the backing plate that holds it in.
@@ -125,6 +122,13 @@ def make_parts():
     backing = backing - bd.extrude(hw.sketch, amount=-(4 * T))
     parts["ipad_pocket"] = pocket
     parts["ipad_backing"] = backing
+
+    # Raised frame round the iPad window, glued on the front face, so the screen stands out.
+    with bd.BuildSketch(bd.Plane.XZ) as fr:
+        with bd.Locations((IPAD_CX, IPAD_CZ)):
+            bd.RectangleRounded(WINDOW_W + 2 * IPAD_FRAME, WINDOW_H + 2 * IPAD_FRAME, IPAD_CORNER_R - 2.5 + IPAD_FRAME)
+            bd.RectangleRounded(WINDOW_W, WINDOW_H, IPAD_CORNER_R - 2.5, mode=bd.Mode.SUBTRACT)
+    parts["ipad_frame"] = bd.extrude(fr.sketch, amount=T)
 
     # Raised bezel round the print slot, and the round sign, glued on the front face.
     with bd.BuildSketch(bd.Plane.XZ) as bz:
@@ -162,28 +166,12 @@ def make_parts():
     back = back - bd.extrude(vents.sketch, amount=-(D + 1))
     parts["back"] = back
 
-    # Bottom: vent holes under the Mac mini for its air intake.
-    mac_x0, mac_y0 = PRINTER_CX - MAC_W / 2, T + 30
-    for i in range(5):
-        for j in range(5):
-            x, y = mac_x0 + 18 + i * 23, mac_y0 + 18 + j * 23
-            parts["bottom"] = parts["bottom"] - bd.Cylinder(4.5, 3 * T).moved(bd.Location((x, y, 0)))
+    # Air for the Mac mini: hearts in the right wall beside it (the box sits flat on the table).
+    with bd.BuildSketch(bd.Plane.YZ) as side_vents:
+        for i, y in enumerate((T + 45, T + 93, T + 141)):
+            bd.add(heart(y, T + 26 + (4 if i % 2 else 0), 30))
+    parts["right"] = parts["right"] - bd.extrude(side_vents.sketch, amount=W + 1)
 
-    # Feet: two discs each, under the corners.
-    feet = []
-    for x in (30, W - 30):
-        for y in (30, D - 30):
-            feet.append(bd.Cylinder(FOOT_D / 2, FOOT_LAYERS * T, align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MAX)).moved(bd.Location((x, y, 0))))
-    parts["feet"] = bd.Compound(feet)
-
-    # Top: the event sign stands in two slots, centred on the box.
-    sign_y = TOP_SIGN_Y
-    sign = box(W / 2 - TOP_SIGN_W / 2, W / 2 + TOP_SIGN_W / 2, sign_y, sign_y + T, H, H + TOP_SIGN_H)
-    for sx in (-1, 1):
-        tab = box(W / 2 + sx * 55 - TAB / 2, W / 2 + sx * 55 + TAB / 2, sign_y, sign_y + T, H - T, H)
-        sign = sign + tab
-        parts["top"] = parts["top"] - box(W / 2 + sx * 55 - TAB / 2 - 0.1, W / 2 + sx * 55 + TAB / 2 + 0.1, sign_y - 0.1, sign_y + T + 0.1, H - T - 1, H + 1)
-    parts["top_sign"] = sign
     return parts
 
 
@@ -203,7 +191,7 @@ COLOURS = {
     "front": "#E9C9A0", "back": "#D9B68A", "left": "#E2BF93", "right": "#E2BF93", "top": "#EDD0A8",
     "bottom": "#D4AE80", "divider": "#CFA676", "shelf": "#CFA676", "ipad_pocket": "#C99D6B",
     "ipad_backing": "#C29462", "slot_bezel": "#F0D7B4", "sign_disc": "#F7EBC8", "posts": "#B98A58",
-    "feet": "#B98A58", "top_sign": "#F0D7B4", "rollo_standin": "#F2F2F2", "labels_standin": "#FFFFFF", "mac_mini_standin": "#B8BCC2",
+    "ipad_frame": "#F0D7B4", "rollo_standin": "#F2F2F2", "labels_standin": "#FFFFFF", "mac_mini_standin": "#B8BCC2",
     "ipad_standin": "#2B2B2E",
 }
 

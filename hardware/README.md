@@ -11,26 +11,26 @@ Two designs:
 A 393 x 270 x 265 mm finger-jointed box in 6 mm (1/4 in) plywood. Inside: the iPad mini behind a
 window on the left, the Rollo on a shelf behind the print slot on the right with its labels behind
 it, and a 2024 Mac mini on the floor under the shelf. The back comes off with four thumb screws; the
-power cords leave through a notch in it. Every piece cuts on a Glowforge in one go.
+power cords leave through a notch in it. It sits flat on the table, with vents in the side by the Mac
+mini. Every piece cuts on a Glowforge in one go.
 
 **Cut files** (`DXF/box/`, `CUT` layer cuts, `ENGRAVE` layer engraves):
 
 | Part | Cut | Notes |
 | --- | --- | --- |
-| front | 1 | iPad window, camera hole, print slot; "selfie booth" engraved |
+| front | 1 | iPad window (the whole iPad face shows, camera included) and print slot |
+| ipad_frame | 1 | raised frame glued round the window; "selfie booth" engraved along its top |
 | back | 1 | thumb-screw holes, cord notch, heart vents |
-| left, right | 1 each | finger joints; right has the shelf's tab slots |
-| top | 1 | slots for the divider and the event sign |
-| bottom | 1 | vent holes under the Mac mini |
+| left, right | 1 each | finger joints; right has the shelf's tab slots and heart vents by the Mac mini |
+| top | 1 | plain: glued onto the divider's top edge |
+| bottom | 1 | the box sits flat on the table |
 | divider | 1 | between the iPad and printer sides; cable pass-through for the iPad's charger |
 | shelf | 1 | the printer and its labels sit on it |
 | ipad_pocket | 1 | glue to the back of the front panel, round the window |
 | ipad_backing | 1 | screws to the pocket and holds the iPad in |
 | slot_bezel | 1 | glue round the print slot on the front |
 | sign_disc | 1 | "tap the screen and smile"; glue above the slot |
-| top_sign | 1 | the event name (`SIGN_TEXT` in `src/dims.py`); stands in the top's slots |
 | post_layer | 12 | glue 3 together for each of the 4 corner posts |
-| foot_layer | 8 | glue 2 together for each of the 4 feet |
 
 **Also needed:** wood glue; 4 x M4 thumb screws (about 12 mm) and 4 x M4 threaded inserts for wood;
 4 x small wood screws (M3 x 10 or #4 x 3/8 in) for the iPad backing; a right-angle USB-C cable for the
@@ -38,21 +38,21 @@ iPad; a USB-C to USB-A adapter for the printer cable (the M4 Mac mini has USB-C 
 
 **Assembly:**
 
-1. Glue the iPad pocket to the back of the front panel, centred on the window. Glue the slot bezel and
-   the round sign to the front.
+1. Glue the iPad pocket to the back of the front panel, centred on the window. Glue the iPad frame,
+   the slot bezel and the round sign to the front.
 2. Glue the box together: front, bottom, sides and top, with the divider and shelf tabbed in. Leave
    the back off.
-3. Glue up the four corner posts (3 layers each) and the four feet (2 layers each). Press an M4 insert
-   into each post, glue the posts into the back corners, and the feet under the corners.
+3. Glue up the four corner posts (3 layers each). Press an M4 insert into each post and glue the posts
+   into the back corners.
 4. Put the iPad face down in its pocket, run its cable through the divider, and screw the backing
    plate on.
 5. Mac mini on the floor of the right side, printer on the shelf pushed to the front, labels behind it
    feeding into the printer. Plug in, cords out through the back notch.
-6. Thumb-screw the back on. Stand the event sign in the top.
+6. Thumb-screw the back on.
 
-**Before cutting:** measure the printer (published size: 195 x 75 x 85 mm) and check where the label
-comes out. The slot is sized for a label leaving the front near the top of the printer; if yours
-exits elsewhere, change `SLOT_Z0` / `SLOT_Z1` in `src/box_dims.py`. Do a test cut of one finger joint
+**Before cutting:** measure the printer (published size: 195 x 75 x 85 mm), and with it standing on a
+table, measure how high the label comes out. Set that as `LABEL_EXIT_Z` in `src/box_dims.py`: the print
+slot is centred on it (24 mm tall, 122 mm wide). Do a test cut of one finger joint
 in your plywood first: real 1/4 in plywood is often thinner than 6 mm (change `T`).
 
 Rebuild and check: `.venv/bin/python src/box.py && .venv/bin/python src/box_parts.py && .venv/bin/python checks/box_check.py`

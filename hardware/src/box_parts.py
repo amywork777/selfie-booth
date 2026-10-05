@@ -3,8 +3,8 @@ engraving lands on the outside and reads the right way round. CUT layer cuts, EN
 
 Cut list (6 mm plywood):
   front, back, left, right, top, bottom, divider, shelf, ipad_pocket, ipad_backing,
-  slot_bezel, sign_disc, top_sign: 1 each
-  post_layer: 12 (3 per corner post, 4 posts)      foot_layer: 8 (2 per foot, 4 feet)
+  ipad_frame, slot_bezel, sign_disc: 1 each
+  post_layer: 12 (3 per corner post, 4 posts)
 """
 
 from __future__ import annotations
@@ -14,9 +14,8 @@ from functools import lru_cache
 from cadgen import build123d as bd
 from cadgen import dxf, flatten
 
-from box import TOP_SIGN_H, TOP_SIGN_W, make_parts
-from box_dims import FOOT_D, H, INSERT_HOLE, IPAD_CX, IPAD_CZ, IPAD_H, POST, PRINTER_CX, SIGN_CZ, SIGN_D, W
-from dims import SIGN_TEXT
+from box import make_parts
+from box_dims import INSERT_HOLE, IPAD_CX, IPAD_CZ, IPAD_FRAME, POST, PRINTER_CX, SIGN_CZ, WINDOW_H
 from panels import heart, text
 
 
@@ -53,7 +52,13 @@ def frontal(name, engrave=None):
 
 @dxf(out="../DXF/box/front.dxf")
 def front():
-    return frontal("front", text("selfie booth", IPAD_CX, IPAD_CZ + IPAD_H / 2 + 14, 20))
+    return frontal("front")
+
+
+@dxf(out="../DXF/box/ipad_frame.dxf")
+def ipad_frame():
+    """Raised frame round the iPad; "selfie booth" engraved along its top."""
+    return frontal("ipad_frame", text("selfie booth", IPAD_CX, IPAD_CZ + WINDOW_H / 2 + IPAD_FRAME / 2, 11))
 
 
 @dxf(out="../DXF/box/sign_disc.dxf")
@@ -62,11 +67,6 @@ def sign_disc():
     with bd.BuildSketch() as h:
         bd.add(heart(PRINTER_CX, SIGN_CZ - 28, 12))
     return frontal("sign_disc", words + h.sketch)
-
-
-@dxf(out="../DXF/box/top_sign.dxf")
-def top_sign():
-    return frontal("top_sign", text(SIGN_TEXT, W / 2, H + TOP_SIGN_H / 2, 30))
 
 
 @dxf(out="../DXF/box/slot_bezel.dxf")
@@ -132,15 +132,7 @@ def post_layer():
     return s.sketch
 
 
-@dxf(out="../DXF/box/foot_layer.dxf")
-def foot_layer():
-    """Cut 8. Glue two together for each foot."""
-    with bd.BuildSketch() as s:
-        bd.Circle(FOOT_D / 2)
-    return s.sketch
-
-
 if __name__ == "__main__":
     for model in (front, back, left, right, top, bottom, divider, shelf, ipad_pocket, ipad_backing,
-                  slot_bezel, sign_disc, top_sign, post_layer, foot_layer):
+                  ipad_frame, slot_bezel, sign_disc, post_layer):
         model()
