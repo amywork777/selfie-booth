@@ -1,5 +1,5 @@
 // Selfie booth: live camera shown as printer dots, a 3-2-1 countdown per pose, review, print.
-import { LAYOUTS, STICKERS, render, shotCount } from './label.js'
+import { COUNTS, PATTERNS, STICKERS, render, shotCount } from './label.js'
 
 const $ = (id) => document.getElementById(id)
 
@@ -13,19 +13,19 @@ const canvas = $('label')
 const LIVE_SCALE = 0.5 // live preview at half the printer's resolution keeps it smooth on an iPad mini
 const REVIEW_TIMEOUT = 45_000 // walk away from the review screen and it goes back to live
 
-// Older saves stored one combined "frame"; Sparkle and Hearts are now Classic plus a sticker pack.
-const oldFrame = localStorage.getItem('booth:frame')
+const saved = (key, options, fallback) => (options[localStorage.getItem(key)] ? localStorage.getItem(key) : fallback)
 const settings = {
-  layout: localStorage.getItem('booth:layout') ?? (LAYOUTS[oldFrame] ? oldFrame : 'classic'),
-  stickers: localStorage.getItem('booth:stickers') ?? ({ sparkle: 'sparkles', hearts: 'hearts' }[oldFrame] ?? 'none'),
+  count: saved('booth:count', COUNTS, 'one'),
+  pattern: saved('booth:pattern', PATTERNS, 'plain'),
+  stickers: saved('booth:stickers', STICKERS, 'none'),
   caption: localStorage.getItem('booth:caption') ?? '',
   showDate: localStorage.getItem('booth:date') !== 'false',
   sound: localStorage.getItem('booth:sound') !== 'false',
 }
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
 
-let state = 'pick'
-let shots = [] // captured poses, kept so layout and caption changes re-render them
+let state = 'count'
+let shots = [] // captured poses, kept so pattern and caption changes re-render them
 let reviewTimer = 0
 
 function setState(next) {
@@ -68,7 +68,7 @@ let lastFrame = 0
 let lastTiles = 0
 function loop(now) {
   requestAnimationFrame(loop)
-  if (state === 'pick') {
+  if (state === 'count' || state === 'pattern') {
     if (now - lastTiles > 400) { // tiles refresh a couple of times a second: enough to see yourself
       lastTiles = now
       renderTiles()
@@ -80,16 +80,16 @@ function loop(now) {
   lastFrame = now
   // Before shooting, every slot shows the camera. While shooting: poses taken, then the camera in
   // the current slot, then the numbers of the poses still to come.
-  const live = state === 'live' ? Array(shotCount(settings.layout)).fill(video) : [...shots, video]
+  const live = state === 'live' ? Array(shotCount(settings.count)).fill(video) : [...shots, video]
   render(canvas, live, { ...settings, scale: LIVE_SCALE })
 }
 
 const TILE_SCALE = 0.22
 function renderTiles() {
-  for (const tile of $('tiles').children) {
-    const layout = tile.dataset.key
-    const live = video.videoWidth ? Array(shotCount(layout)).fill(video) : []
-    render(tile.firstChild, live, { ...settings, layout, scale: TILE_SCALE })
+  const step = state // 'count' or 'pattern': the tiles vary that one setting
+  for (const tile of $(`${step}-tiles`).children) {
+    const opts = { ...settings, [step]: tile.dataset.key, scale: TILE_SCALE }
+    render(tile.firstChild, video.videoWidth ? Array(shotCount(opts.count)).fill(video) : [], opts)
   }
 }
 
@@ -127,7 +127,7 @@ async function shoot() {
   if (state !== 'live' || !video.videoWidth) return
   setState('countdown')
   shots = []
-  const total = shotCount(settings.layout)
+  const total = shotCount(settings.count)
   const count = $('count')
   for (let pose = 0; pose < total; pose++) {
     message(total > 1 ? `Pose ${pose + 1} of ${total}` : '')
@@ -193,21 +193,29 @@ function backToLive() {
 /** Back to step 1, ready for the next guest. */
 function backToStart() {
   backToLive()
-  setState('pick')
+  showStep('count')
 }
 
-// Someone picks a layout and wanders off: go back to the layout tiles after a minute.
+function showStep(step) {
+  setState(step)
+  $('pick-title').textContent = step === 'count' ? 'Step 1: how many photos' : 'Step 2: pick a pattern'
+  lastTiles = 0
+  if (step === 'pattern') idle()
+}
+
+// Someone wanders off mid-way: go back to step 1 after a minute.
 const IDLE_TIMEOUT = 60_000
 let idleTimer = 0
 function idle() {
   clearTimeout(idleTimer)
-  idleTimer = setTimeout(() => { if (state === 'live') backToStart() }, IDLE_TIMEOUT)
+  idleTimer = setTimeout(() => { if (state === 'live' || state === 'pattern') backToStart() }, IDLE_TIMEOUT)
 }
 
-function pickLayout(key) {
-  settings.layout = key
-  localStorage.setItem('booth:layout', key)
-  log(`layout: ${key}`)
+function pick(step, key) {
+  settings[step] = key
+  localStorage.setItem(`booth:${step}`, key)
+  log(`${step}: ${key}`)
+  if (step === 'count') return showStep('pattern')
   setState('live')
   idle()
 }
@@ -242,7 +250,7 @@ async function print() {
 
 // ---- Controls ----------------------------------------------------------------------------------
 
-/** A row of radio buttons for one setting (layout or stickers). */
+/** A row of radio buttons for one setting (the sticker pack). */
 function buildChoices(boxId, options, setting) {
   const box = $(boxId)
   for (const [key, o] of Object.entries(options)) {
@@ -262,23 +270,25 @@ function buildChoices(boxId, options, setting) {
   }
 }
 
-function buildTiles() {
-  for (const [key, l] of Object.entries(LAYOUTS)) {
+/** Big tappable tiles for one step, each a live preview of the label with that choice. */
+function buildTiles(step, options) {
+  for (const [key, o] of Object.entries(options)) {
     const b = document.createElement('button')
     b.type = 'button'
     b.className = 'tile'
     b.dataset.key = key
-    const n = shotCount(key)
     const name = document.createElement('span')
     name.className = 'tile-name'
-    name.textContent = l.name
-    const poses = document.createElement('span')
-    poses.className = 'tile-poses'
-    poses.textContent = n === 1 ? '1 photo' : `${n} poses`
-    name.append(poses)
+    name.textContent = o.name
+    if (step === 'count' && key === 'twin') {
+      const note = document.createElement('span')
+      note.className = 'tile-poses'
+      note.textContent = '4 poses, 2 copies'
+      name.append(note)
+    }
     b.append(document.createElement('canvas'), name)
-    b.onclick = () => pickLayout(key)
-    $('tiles').append(b)
+    b.onclick = () => pick(step, key)
+    $(`${step}-tiles`).append(b)
   }
 }
 
@@ -308,7 +318,8 @@ $('sound').onclick = () => {
 }
 $('shoot').onclick = shoot
 $('retake').onclick = backToLive
-$('back').onclick = backToStart
+$('back').onclick = () => { backToLive(); clearTimeout(idleTimer); showStep('pattern') }
+$('to-count').onclick = () => showStep('count')
 $('print').onclick = print
 
 // ---- Printer status ----------------------------------------------------------------------------
@@ -327,7 +338,8 @@ async function pollStatus() {
 
 // ---- Start ---------------------------------------------------------------------------------------
 
-buildTiles()
+buildTiles('count', COUNTS)
+buildTiles('pattern', PATTERNS)
 buildChoices('stickers', STICKERS, 'stickers')
 syncControls()
 pollStatus()

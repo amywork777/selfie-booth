@@ -17,13 +17,17 @@
 </head>
 <body>
   <h1 class="title">Frames</h1>
-  <p>Every layout and sticker pack with a stand-in photo, exactly as it prints. Any pack works on any layout.</p>
-  <h2 class="label">Layouts</h2>
-  <div class="grid" id="layouts"></div>
-  <h2 class="label">Sticker packs</h2>
+  <p>Every choice with a stand-in photo, exactly as it prints. Photos, patterns and stickers all mix freely.</p>
+  <h2 class="label">Step 1: how many photos</h2>
+  <div class="grid" id="counts"></div>
+  <h2 class="label">Step 2: patterns</h2>
+  <div class="grid" id="patterns"></div>
+  <h2 class="label">Mixed</h2>
+  <div class="grid" id="mixes"></div>
+  <h2 class="label">Step 3: sticker packs</h2>
   <div class="grid" id="stickers"></div>
   <script type="module">
-    import { LAYOUTS, STICKERS, render, shotCount } from './label.js'
+    import { COUNTS, PATTERNS, STICKERS, render, shotCount } from './label.js'
 
     // A stand-in photo: soft background, a face-shaped blob and shoulders, so tones and the window shape show.
     const photo = document.createElement('canvas')
@@ -52,20 +56,21 @@
     function card(title, opts) {
       const fig = document.createElement('figure')
       const c = document.createElement('canvas')
-      render(c, Array(shotCount(opts.layout)).fill(photo), { caption: "amy's party", showDate: true, ...opts })
+      render(c, Array(shotCount(opts.count ?? 'one')).fill(photo), { caption: "amy's party", showDate: true, ...opts })
       const cap = document.createElement('figcaption')
       cap.textContent = title
       fig.append(c, cap)
       return fig
     }
-    const packs = Object.keys(STICKERS).filter((k) => k !== 'none')
-    Object.entries(LAYOUTS).forEach(([key, l], i) => {
-      const stickers = packs[i % packs.length]
-      document.getElementById('layouts').append(card(`${l.name} + ${STICKERS[stickers].name}`, { layout: key, stickers }))
+    const add = (id, title, opts) => document.getElementById(id).append(card(title, opts))
+    for (const [key, c] of Object.entries(COUNTS)) add('counts', c.name, { count: key })
+    for (const [key, p] of Object.entries(PATTERNS)) add('patterns', p.name, { pattern: key })
+    const counts = Object.keys(COUNTS)
+    Object.keys(PATTERNS).forEach((pattern, i) => {
+      const count = counts[(i + 1) % counts.length]
+      add('mixes', `${COUNTS[count].name}, ${PATTERNS[pattern].name}`, { count, pattern, stickers: Object.keys(STICKERS)[1 + (i % 7)] })
     })
-    for (const [key, s] of Object.entries(STICKERS)) {
-      document.getElementById('stickers').append(card(s.name, { layout: 'classic', stickers: key }))
-    }
+    for (const [key, s] of Object.entries(STICKERS)) add('stickers', s.name, { stickers: key })
   </script>
 </body>
 </html>

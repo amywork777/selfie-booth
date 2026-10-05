@@ -108,12 +108,16 @@ input:focus, .choice:focus-visible, .btn:focus-visible { outline: 3px solid var(
 
 /* Step 1: layout tiles, each showing the live camera in that layout. */
 .pick { display: none; }
-[data-state="pick"] .stage, [data-state="pick"] .controls { display: none; }
-[data-state="pick"] .pick {
+[data-state="count"] .stage, [data-state="count"] .controls,
+[data-state="pattern"] .stage, [data-state="pattern"] .controls { display: none; }
+[data-state="count"] .pick, [data-state="pattern"] .pick {
   display: grid; grid-row: 2 / -1; grid-column: 1 / -1; min-height: 0;
   grid-template-rows: auto minmax(0, 1fr) auto; gap: calc(var(--space-unit) * 3);
 }
-.pick > .label { margin: 0; }
+.pick-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; }
+.pick-head .label { margin: 0; }
+[data-state="count"] #pattern-tiles, [data-state="pattern"] #count-tiles,
+[data-state="count"] #to-count, [data-state="pattern"] .host { display: none; }
 .tiles {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 24px 22px;
   align-content: start; overflow-y: auto; padding: 4px 10px 14px 4px; -webkit-overflow-scrolling: touch;

@@ -9,16 +9,20 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-state="pick">
+<body data-state="count">
   <main class="booth">
     <header class="top">
       <h1 class="title">Selfie booth</h1>
       <p class="status" id="status">Checking printer</p>
     </header>
 
-    <section class="pick" aria-label="Pick a layout">
-      <h2 class="label">Step 1: pick a layout</h2>
-      <div class="tiles" id="tiles"></div>
+    <section class="pick" aria-labelledby="pick-title">
+      <div class="pick-head">
+        <h2 class="label" id="pick-title">Step 1: how many photos</h2>
+        <button type="button" class="choice" id="to-count">Change photos</button>
+      </div>
+      <div class="tiles" id="count-tiles"></div>
+      <div class="tiles" id="pattern-tiles"></div>
       <div class="host">
         <label class="field">
           <span class="label">Caption</span>
@@ -49,13 +53,13 @@
     <section class="controls">
       <div class="options" id="options">
         <div class="field wide">
-          <span class="label">Step 2: stickers</span>
+          <span class="label">Step 3: stickers, then smile</span>
           <div class="choices" id="stickers" role="radiogroup" aria-label="Stickers"></div>
         </div>
       </div>
 
       <div class="actions">
-        <button type="button" class="btn" id="back">Layouts</button>
+        <button type="button" class="btn" id="back">Patterns</button>
         <button type="button" class="btn primary" id="shoot">Take photo</button>
         <button type="button" class="btn" id="retake">Retake</button>
         <button type="button" class="btn primary" id="print">Print</button>
