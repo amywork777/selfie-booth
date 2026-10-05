@@ -152,6 +152,11 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 [data-state="caption"] .caption-step { display: flex; }
 .caption-step input { flex: 1; height: 64px; font-size: 24px; }
 .caption-step .choice { height: 64px; padding: 0 22px; }
+/* Doodling on Plain: tools show, and the preview takes finger drawing. */
+.doodle-tool, [data-mode="event"] #caption, [data-mode="event"] #date { display: none; }
+[data-doodle="on"] .doodle-tool { display: block; }
+[data-state="caption"][data-doodle="on"] #label { touch-action: none; cursor: crosshair; }
+[data-state="caption"] .message { pointer-events: none; }
 #step-title:empty { display: none; }
 [data-state="countdown"] #step-title, [data-state="review"] #step-title,
 [data-state="printing"] #step-title, [data-state="done"] #step-title { visibility: hidden; }

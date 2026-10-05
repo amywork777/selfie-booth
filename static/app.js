@@ -1,5 +1,5 @@
 // Selfie booth: live camera shown as printer dots, a 3-2-1 countdown per pose, review, print.
-import { COUNTS, PATTERNS, render, shotCount } from './label.js'
+import { COUNTS, H, PATTERNS, W, render, shotCount } from './label.js'
 
 const $ = (id) => document.getElementById(id)
 
@@ -21,6 +21,7 @@ const settings = {
   captionMode: localStorage.getItem('booth:captionMode') === 'event' ? 'event' : 'guest',
   eventCaption: localStorage.getItem('booth:eventCaption') ?? '',
   caption: '', // the caption on this guest's print
+  doodle: [], // finger-drawn strokes on Plain, in label coordinates
   showDate: localStorage.getItem('booth:date') !== 'false',
   sound: localStorage.getItem('booth:sound') !== 'false',
 }
@@ -214,19 +215,30 @@ function backToStart() {
 const eventMode = () => settings.captionMode === 'event'
 function resetCaption() {
   settings.caption = eventMode() ? settings.eventCaption : ''
+  settings.doodle = []
   $('caption').value = ''
   lastTiles = 0
 }
 
-// With one caption for everyone, guests skip the caption step.
-const steps = () => (eventMode() ? ['count', 'pattern', 'live'] : ['count', 'pattern', 'caption', 'live'])
-const STEP_TITLES = { count: 'How many photos?', pattern: 'Pick a pattern', caption: 'Add a caption', live: 'Smile!' }
+// Step 3 is for the caption and, on Plain, doodling. With one caption for everyone it only appears
+// on Plain, so there's something to draw on.
+const canDoodle = () => settings.pattern === 'plain'
+const steps = () => (eventMode() && !canDoodle() ? ['count', 'pattern', 'live'] : ['count', 'pattern', 'caption', 'live'])
+function stepTitle(step) {
+  if (step !== 'caption') return { count: 'How many photos?', pattern: 'Pick a pattern', live: 'Smile!' }[step]
+  if (!canDoodle()) return 'Add a caption'
+  return eventMode() ? 'Doodle on it' : 'Add a caption and doodle'
+}
 function showStep(step) {
   if (step !== 'live') stopCamera() // the camera only runs on the photo step
   setState(step)
+  document.body.dataset.mode = settings.captionMode
+  document.body.dataset.doodle = canDoodle() ? 'on' : 'off'
   const all = steps()
   const heading = step === 'count' || step === 'pattern' ? $('pick-title') : $('step-title')
-  heading.innerHTML = `<span class="step-num">Step ${all.indexOf(step) + 1} of ${all.length}</span>${STEP_TITLES[step]}`
+  heading.innerHTML = `<span class="step-num">Step ${all.indexOf(step) + 1} of ${all.length}</span>${stepTitle(step)}`
+  if (step === 'caption' && canDoodle() && !settings.doodle.length) message('Draw anywhere with your finger')
+  else message('')
   lastTiles = 0
   syncTiles()
   if (step === 'caption') render(canvas, [], { ...settings, scale: LIVE_SCALE })
@@ -244,6 +256,7 @@ function idle() {
 
 /** Tapping a tile only selects it; Next moves on. */
 function pick(step, key) {
+  if (step === 'pattern' && key !== 'plain') settings.doodle = [] // doodles only live on Plain
   settings[step] = key
   localStorage.setItem(`booth:${step}`, key)
   syncTiles()
@@ -369,6 +382,33 @@ $('back').onclick = () => {
   showStep(before)
 }
 $('to-photo').onclick = next
+
+// ---- Doodling on Plain -----------------------------------------------------------------------------
+
+function labelPoint(e) {
+  const r = canvas.getBoundingClientRect()
+  return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H]
+}
+let drawing = null
+canvas.addEventListener('pointerdown', (e) => {
+  if (state !== 'caption' || !canDoodle()) return
+  canvas.setPointerCapture(e.pointerId)
+  drawing = [labelPoint(e)]
+  settings.doodle.push(drawing)
+  message('')
+  rerender()
+  idle()
+})
+canvas.addEventListener('pointermove', (e) => {
+  if (!drawing) return
+  drawing.push(labelPoint(e))
+  rerender()
+})
+const endStroke = () => { drawing = null }
+canvas.addEventListener('pointerup', endStroke)
+canvas.addEventListener('pointercancel', endStroke)
+$('undo').onclick = () => { settings.doodle.pop(); rerender() }
+$('clear').onclick = () => { settings.doodle = []; rerender() }
 $('prev').onclick = () => showStep('count')
 $('next').onclick = next
 $('settings').onclick = () => {

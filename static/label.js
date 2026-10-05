@@ -566,6 +566,23 @@ function drawWaiting(ctx, s, n, ink, centre) {
   ctx.fillText(String(n), cx, cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2)
 }
 
+/** A guest's finger drawing (strokes of label-space points): black pen with a white edge so it reads on photos. */
+function drawDoodle(ctx, strokes) {
+  if (!strokes.length) return
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  for (const [width, colour] of [[26, '#fff'], [12, '#000']]) {
+    ctx.lineWidth = width
+    ctx.strokeStyle = colour
+    for (const pts of strokes) {
+      ctx.beginPath()
+      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))
+      if (pts.length === 1) ctx.lineTo(pts[0][0] + 0.1, pts[0][1]) // a tap leaves a dot
+      ctx.stroke()
+    }
+  }
+}
+
 function fitSize(ctx, text, maxWidth, max) {
   let size = max
   for (; size > 28; size -= 4) {
@@ -580,7 +597,7 @@ function fitSize(ctx, text, maxWidth, max) {
  * white, exactly as it will print. `shots[i]` is the video or image for pose i; a missing pose shows
  * its number. Photos are mirrored so the print matches what people saw on screen.
  */
-export function render(canvas, shots, { count = 'one', pattern = 'plain', caption = '', showDate = true, scale = 1 } = {}) {
+export function render(canvas, shots, { count = 'one', pattern = 'plain', caption = '', showDate = true, doodle = [], scale = 1 } = {}) {
   const L = layout(count, pattern)
   const ink = L.ink ?? '#000'
   const paper = L.paper ?? '#fff'
@@ -640,6 +657,8 @@ export function render(canvas, shots, { count = 'one', pattern = 'plain', captio
       ctx.fillText(DATE.format(new Date()).toUpperCase(), b.x + b.w / 2, top + capSize * 0.8 + gap + dateSize / 2)
     }
   }
+
+  drawDoodle(ctx, doodle)
 
   // Snap anti-aliased edges so the screen shows exactly the dots the printer will make.
   ctx.setTransform(1, 0, 0, 1, 0, 0)
