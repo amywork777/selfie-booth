@@ -11,15 +11,19 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 28px; }
     figure { margin: 0; display: grid; gap: 10px; }
     canvas { width: 100%; border: 3px solid var(--rule); border-radius: 6px; box-shadow: 6px 6px 0 var(--ink); background: #fff; }
+    h2.label { margin: 36px 0 16px; }
     figcaption { font: 700 var(--text-small)/1 var(--font-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
   </style>
 </head>
 <body>
   <h1 class="title">Frames</h1>
-  <p>Every frame with a sample photo, exactly as it prints.</p>
-  <div class="grid" id="grid"></div>
+  <p>Every layout and sticker pack with a stand-in photo, exactly as it prints. Any pack works on any layout.</p>
+  <h2 class="label">Layouts</h2>
+  <div class="grid" id="layouts"></div>
+  <h2 class="label">Sticker packs</h2>
+  <div class="grid" id="stickers"></div>
   <script type="module">
-    import { FRAMES, render } from './label.js'
+    import { LAYOUTS, STICKERS, render, shotCount } from './label.js'
 
     // A stand-in photo: soft background, a face-shaped blob and shoulders, so tones and the window shape show.
     const photo = document.createElement('canvas')
@@ -45,14 +49,22 @@
     g.beginPath(); g.arc(450, 600, 70, 0.2, Math.PI - 0.2); g.stroke()
 
     await Promise.all([document.fonts.load('900 40px Doto'), document.fonts.load('700 80px Caveat')]).catch(() => {})
-    for (const [key, f] of Object.entries(FRAMES)) {
+    function card(title, opts) {
       const fig = document.createElement('figure')
       const c = document.createElement('canvas')
-      render(c, photo, { frame: key, caption: "amy's party", showDate: true })
+      render(c, Array(shotCount(opts.layout)).fill(photo), { caption: "amy's party", showDate: true, ...opts })
       const cap = document.createElement('figcaption')
-      cap.textContent = f.name
+      cap.textContent = title
       fig.append(c, cap)
-      document.getElementById('grid').append(fig)
+      return fig
+    }
+    const packs = Object.keys(STICKERS).filter((k) => k !== 'none')
+    Object.entries(LAYOUTS).forEach(([key, l], i) => {
+      const stickers = packs[i % packs.length]
+      document.getElementById('layouts').append(card(`${l.name} + ${STICKERS[stickers].name}`, { layout: key, stickers }))
+    })
+    for (const [key, s] of Object.entries(STICKERS)) {
+      document.getElementById('stickers').append(card(s.name, { layout: 'classic', stickers: key }))
     }
   </script>
 </body>

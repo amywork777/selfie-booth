@@ -1,5 +1,5 @@
-// Selfie booth: live camera shown as printer dots, 3-2-1 countdown, review, print.
-import { FRAMES, render } from './label.js'
+// Selfie booth: live camera shown as printer dots, a 3-2-1 countdown per pose, review, print.
+import { LAYOUTS, STICKERS, render, shotCount } from './label.js'
 
 const $ = (id) => document.getElementById(id)
 
@@ -13,8 +13,11 @@ const canvas = $('label')
 const LIVE_SCALE = 0.5 // live preview at half the printer's resolution keeps it smooth on an iPad mini
 const REVIEW_TIMEOUT = 45_000 // walk away from the review screen and it goes back to live
 
+// Older saves stored one combined "frame"; Sparkle and Hearts are now Classic plus a sticker pack.
+const oldFrame = localStorage.getItem('booth:frame')
 const settings = {
-  frame: localStorage.getItem('booth:frame') ?? 'classic',
+  layout: localStorage.getItem('booth:layout') ?? (LAYOUTS[oldFrame] ? oldFrame : 'classic'),
+  stickers: localStorage.getItem('booth:stickers') ?? ({ sparkle: 'sparkles', hearts: 'hearts' }[oldFrame] ?? 'none'),
   caption: localStorage.getItem('booth:caption') ?? '',
   showDate: localStorage.getItem('booth:date') !== 'false',
   sound: localStorage.getItem('booth:sound') !== 'false',
@@ -22,7 +25,7 @@ const settings = {
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
 
 let state = 'live'
-let still = null // the captured frame, kept so frame and caption changes re-render it
+let shots = [] // captured poses, kept so layout and caption changes re-render them
 let reviewTimer = 0
 
 function setState(next) {
@@ -67,11 +70,14 @@ function loop(now) {
   if (state !== 'live' && state !== 'countdown') return
   if (now - lastFrame < 66 || !video.videoWidth) return // about 15 fps is plenty for a preview
   lastFrame = now
-  render(canvas, video, { ...settings, scale: LIVE_SCALE })
+  // Before shooting, every slot shows the camera. While shooting: poses taken, then the camera in
+  // the current slot, then the numbers of the poses still to come.
+  const live = state === 'live' ? Array(shotCount(settings.layout)).fill(video) : [...shots, video]
+  render(canvas, live, { ...settings, scale: LIVE_SCALE })
 }
 
 function rerender() {
-  if (still) render(canvas, still, { ...settings, scale: 1 })
+  if (state === 'review' || state === 'printing') render(canvas, shots, { ...settings, scale: 1 })
 }
 
 // ---- Sound: silent until the first tap, off with the Sound button ------------------------------
@@ -103,31 +109,38 @@ async function shoot() {
   log(`shoot tapped: state=${state} video=${video.videoWidth}x${video.videoHeight}`)
   if (state !== 'live' || !video.videoWidth) return
   setState('countdown')
+  shots = []
+  const total = shotCount(settings.layout)
   const count = $('count')
-  for (const n of [3, 2, 1]) {
-    count.textContent = n
-    count.classList.remove('pop')
-    void count.offsetWidth // restart the animation
-    count.classList.add('pop')
-    tone(880, 120)
-    await sleep(900)
-  }
-  count.textContent = ''
+  for (let pose = 0; pose < total; pose++) {
+    message(total > 1 ? `Pose ${pose + 1} of ${total}` : '')
+    for (const n of [3, 2, 1]) {
+      count.textContent = n
+      count.classList.remove('pop')
+      void count.offsetWidth // restart the animation
+      count.classList.add('pop')
+      tone(880, 120)
+      await sleep(900)
+    }
+    count.textContent = ''
 
-  // Freeze the current camera frame at full size so the print is sharper than the live view.
-  const grab = document.createElement('canvas')
-  grab.width = video.videoWidth
-  grab.height = video.videoHeight
-  grab.getContext('2d').drawImage(video, 0, 0)
-  still = grab
-  tone(1600, 60, 'square', 0.08)
-  if (!reducedMotion) {
-    $('flash').classList.remove('go')
-    void $('flash').offsetWidth
-    $('flash').classList.add('go')
+    // Freeze the current camera frame at full size so the print is sharper than the live view.
+    const grab = document.createElement('canvas')
+    grab.width = video.videoWidth
+    grab.height = video.videoHeight
+    grab.getContext('2d').drawImage(video, 0, 0)
+    shots.push(grab)
+    tone(1600, 60, 'square', 0.08)
+    if (!reducedMotion) {
+      $('flash').classList.remove('go')
+      void $('flash').offsetWidth
+      $('flash').classList.add('go')
+    }
+    if (pose < total - 1) await sleep(700) // a beat to change pose
   }
-  rerender()
+  message('')
   setState('review')
+  rerender()
   log('review shown')
   autoPrint()
 }
@@ -154,7 +167,7 @@ function autoPrint() {
 function backToLive() {
   clearTimeout(reviewTimer)
   clearInterval(autoTimer)
-  still = null
+  shots = []
   message('')
   setState('live')
 }
@@ -189,18 +202,19 @@ async function print() {
 
 // ---- Controls ----------------------------------------------------------------------------------
 
-function buildFrames() {
-  const box = $('frames')
-  for (const [key, f] of Object.entries(FRAMES)) {
+/** A row of radio buttons for one setting (layout or stickers). */
+function buildChoices(boxId, options, setting) {
+  const box = $(boxId)
+  for (const [key, o] of Object.entries(options)) {
     const b = document.createElement('button')
     b.type = 'button'
     b.className = 'choice'
     b.role = 'radio'
-    b.textContent = f.name
-    b.dataset.frame = key
+    b.textContent = o.name
+    b.dataset.key = key
     b.onclick = () => {
-      settings.frame = key
-      localStorage.setItem('booth:frame', key)
+      settings[setting] = key
+      localStorage.setItem(`booth:${setting}`, key)
       syncControls()
       rerender()
     }
@@ -209,7 +223,8 @@ function buildFrames() {
 }
 
 function syncControls() {
-  for (const b of $('frames').children) b.setAttribute('aria-checked', String(b.dataset.frame === settings.frame))
+  for (const b of $('layouts').children) b.setAttribute('aria-checked', String(b.dataset.key === settings.layout))
+  for (const b of $('stickers').children) b.setAttribute('aria-checked', String(b.dataset.key === settings.stickers))
   $('date').setAttribute('aria-pressed', String(settings.showDate))
   $('sound').setAttribute('aria-pressed', String(settings.sound))
 }
@@ -252,7 +267,8 @@ async function pollStatus() {
 
 // ---- Start ---------------------------------------------------------------------------------------
 
-buildFrames()
+buildChoices('layouts', LAYOUTS, 'layout')
+buildChoices('stickers', STICKERS, 'stickers')
 syncControls()
 pollStatus()
 setInterval(pollStatus, 5000)
