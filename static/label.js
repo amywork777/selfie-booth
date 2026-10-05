@@ -82,12 +82,12 @@ export const PATTERNS = {
   gingham: {
     name: 'Gingham',
     stickers: 'none',
-    inset: inset(100),
+    inset: inset(124),
     stroke: 8,
     under(ctx, p) {
       // Picnic check: stripes are a fine dot pattern (they print grey), crossings are solid black.
       const { frame: f, k } = p
-      const band = 40 * k, step = 80 * k
+      const band = 26 * k, step = 52 * k
       clipTo(ctx, f, () => {
         ctx.fillStyle = halftone(ctx)
         for (let y = f.y; y < f.y + f.h; y += step) ctx.fillRect(f.x, y, f.w, band)
