@@ -130,7 +130,7 @@ export const PATTERNS = {
     outline: (ctx, s, k) => sketchRect(ctx, s, k),
     art: (ctx, p) => doodles(ctx, p),
   },
-  daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx, p) => chain(ctx, daisy, p) },
+  daisy: { name: 'Daisy chain', stickers: 'flowers', inset: inset(92), stroke: 10, art: (ctx, p) => { vine(ctx, p); chain(ctx, daisy, p, 104) } },
 }
 
 /**
@@ -365,28 +365,71 @@ function heartWindow(ctx, s) {
   ctx.closePath()
 }
 
-/** A daisy: white petals outlined in black round a solid centre, unlike the solid flower sticker. */
+/** A daisy: ten round white petals outlined in black, a solid centre with a little shine. */
 function daisy(ctx, r) {
-  ctx.lineWidth = Math.max(2, r * 0.12)
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2
+  ctx.lineWidth = Math.max(2, r * 0.11)
+  ctx.strokeStyle = '#000'
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2
     ctx.beginPath()
-    ctx.ellipse(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, r * 0.45, r * 0.2, a, 0, Math.PI * 2)
+    ctx.ellipse(Math.cos(a) * r * 0.58, Math.sin(a) * r * 0.58, r * 0.42, r * 0.24, a, 0, Math.PI * 2)
     ctx.fillStyle = '#fff'
     ctx.fill()
-    ctx.strokeStyle = '#000'
     ctx.stroke()
   }
   ctx.beginPath()
-  ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2)
+  ctx.arc(0, 0, r * 0.32, 0, Math.PI * 2)
   ctx.fillStyle = '#000'
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(-r * 0.1, -r * 0.1, r * 0.08, 0, Math.PI * 2)
+  ctx.fillStyle = '#fff'
   ctx.fill()
 }
 
-/** Shapes all the way round the panel edge, alternating size and tilt. */
-function chain(ctx, shape, p) {
+/** A wavy vine with little leaves along the line the daisy chain sits on. */
+function vine(ctx, p) {
   const { frame: f, k } = p
-  const inset = 46 * k, step = 66 * k
+  const inset = 46 * k, amp = 10 * k, wave = 52 * k
+  const x0 = f.x + inset, y0 = f.y + inset, x1 = f.x + f.w - inset, y1 = f.y + f.h - inset
+  // Walk the rectangle clockwise; each point carries the outward normal of its edge.
+  const edges = [[x0, y0, x1, y0, 0, -1], [x1, y0, x1, y1, 1, 0], [x1, y1, x0, y1, 0, 1], [x0, y1, x0, y0, -1, 0]]
+  let d = 0
+  const leaves = []
+  ctx.beginPath()
+  for (const [ax, ay, bx, by, nx, ny] of edges) {
+    const len = Math.hypot(bx - ax, by - ay)
+    for (let t = 0; t <= len; t += 4 * k) {
+      const off = Math.sin(((d + t) / wave) * Math.PI * 2) * amp
+      const x = ax + ((bx - ax) * t) / len + nx * off, y = ay + ((by - ay) * t) / len + ny * off
+      d + t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+      // A leaf halfway between daisies, alternating sides of the vine.
+      if (Math.round((d + t) / (4 * k)) % Math.round(wave / (4 * k)) === Math.round(wave / (8 * k))) leaves.push([x, y, Math.atan2(by - ay, bx - ax), leaves.length % 2 ? 1 : -1])
+    }
+    d += len
+  }
+  ctx.closePath()
+  ctx.lineWidth = 4 * k
+  ctx.strokeStyle = '#000'
+  ctx.stroke()
+  ctx.fillStyle = '#000'
+  for (const [x, y, a, side] of leaves) {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(a + side * 0.7)
+    ctx.beginPath()
+    ctx.moveTo(0, 0)
+    ctx.quadraticCurveTo(9 * k, -7 * k, 20 * k, 0)
+    ctx.quadraticCurveTo(9 * k, 7 * k, 0, 0)
+    ctx.fill()
+    ctx.restore()
+  }
+}
+
+/** Shapes all the way round the panel edge, alternating size and tilt. */
+function chain(ctx, shape, p, spacing = 66) {
+  const { frame: f, k } = p
+  const inset = 46 * k, step = spacing * k
   const pts = []
   for (let x = f.x + inset; x < f.x + f.w - inset; x += step) pts.push([x, f.y + inset], [x + step / 2, f.y + f.h - inset])
   for (let y = f.y + inset + step; y < f.y + f.h - inset; y += step) pts.push([f.x + inset, y], [f.x + f.w - inset, y])
