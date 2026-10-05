@@ -1,10 +1,8 @@
-"""Cut files for the convention box: one DXF per part, laid flat with its outside face up so the
-engraving lands on the outside and reads the right way round. CUT layer cuts, ENGRAVE engraves.
+"""Cut files for the convention box: nine pieces of 6 mm plywood, one DXF each, laid flat with the
+outside face up so the engraving lands on the outside and reads the right way round.
+CUT layer cuts, ENGRAVE layer engraves.
 
-Cut list (6 mm plywood):
-  front, back, left, right, top, bottom, deck, divider, ipad_pocket, ipad_backing,
-  ipad_frame, slot_bezel, sign_disc: 1 each
-  post_layer: 12 (3 per corner post, 4 posts)
+  front, back, left, right, top, bottom, deck, ipad_holder, lock_bar: 1 each. No screws.
 """
 
 from __future__ import annotations
@@ -15,7 +13,10 @@ from cadgen import build123d as bd
 from cadgen import dxf, flatten
 
 from box import make_parts
-from box_dims import INSERT_HOLE, IPAD_CX, IPAD_CZ, IPAD_FRAME, POST, PRINTER_CX, SIGN_CZ, WINDOW_H
+from box_dims import (
+    FRAME_BAND, IPAD_CORNER_R, IPAD_CX, IPAD_CZ, PRINTER_CX, SIGN_CZ, SIGN_D, SLOT_W, SLOT_Z0, SLOT_Z1,
+    WINDOW_H, WINDOW_W,
+)
 from panels import heart, text
 
 
@@ -40,57 +41,61 @@ def lay_flat(shape: bd.Shape, frontal: bool) -> bd.Shape:
         flat = {"x": shape.rotate(bd.Axis.Y, 90), "y": shape.rotate(bd.Axis.X, 90), "z": shape}[thin]
     top = flat.bounding_box().max.Z
     faces = flatten.planar_faces(flat, normal_axis="z", normal_sign=1.0, coordinate_axis="z", coordinate=top)
-    profile = flatten.union_faces([bd.Location((0, 0, -top)) * f for f in faces])
-    return profile
+    return flatten.union_faces([bd.Location((0, 0, -top)) * f for f in faces])
+
+
+def front_engraving() -> bd.Sketch:
+    """Engraved instead of glued on: a frame band round the iPad, the round sign, a line round the slot."""
+    r = IPAD_CORNER_R - 2.5
+    with bd.BuildSketch() as s:
+        # Frame band round the iPad window (filled).
+        with bd.Locations((IPAD_CX, IPAD_CZ)):
+            bd.RectangleRounded(WINDOW_W + 2 * FRAME_BAND, WINDOW_H + 2 * FRAME_BAND, r + FRAME_BAND)
+            bd.RectangleRounded(WINDOW_W + 2, WINDOW_H + 2, r + 1, mode=bd.Mode.SUBTRACT)
+        # Round sign: a ring.
+        with bd.Locations((PRINTER_CX, SIGN_CZ)):
+            bd.Circle(SIGN_D / 2)
+            bd.Circle(SIGN_D / 2 - 3, mode=bd.Mode.SUBTRACT)
+        # A line round the print slot.
+        with bd.Locations((PRINTER_CX, (SLOT_Z0 + SLOT_Z1) / 2)):
+            bd.RectangleRounded(SLOT_W + 16, SLOT_Z1 - SLOT_Z0 + 16, 18)
+            bd.RectangleRounded(SLOT_W + 10, SLOT_Z1 - SLOT_Z0 + 10, 15, mode=bd.Mode.SUBTRACT)
+    words = (
+        text("selfie booth", IPAD_CX, IPAD_CZ + WINDOW_H / 2 + FRAME_BAND + 11, 13)
+        + text("tap the screen", PRINTER_CX, SIGN_CZ + 14, 16)
+        + text("and smile", PRINTER_CX, SIGN_CZ - 8, 16)
+        + heart(PRINTER_CX, SIGN_CZ - 32, 13)
+    )
+    return s.sketch + words
 
 
 def frontal(name, engrave=None):
-    """Cut profile of a front-facing part, plus engraving drawn in front-view (world X, Z) coordinates."""
     cut = lay_flat(parts()[name], frontal=True)
     return cut if engrave is None else {"CUT": cut, "ENGRAVE": engrave}
-
-
-@dxf(out="../DXF/box/front.dxf")
-def front():
-    return frontal("front")
-
-
-@dxf(out="../DXF/box/ipad_frame.dxf")
-def ipad_frame():
-    """Raised frame round the iPad; "selfie booth" engraved along its top."""
-    return frontal("ipad_frame", text("selfie booth", IPAD_CX, IPAD_CZ + WINDOW_H / 2 + IPAD_FRAME / 2, 11))
-
-
-@dxf(out="../DXF/box/sign_disc.dxf")
-def sign_disc():
-    words = text("tap the screen", PRINTER_CX, SIGN_CZ + 12, 15) + text("and smile", PRINTER_CX, SIGN_CZ - 8, 15)
-    with bd.BuildSketch() as h:
-        bd.add(heart(PRINTER_CX, SIGN_CZ - 28, 12))
-    return frontal("sign_disc", words + h.sketch)
-
-
-@dxf(out="../DXF/box/slot_bezel.dxf")
-def slot_bezel():
-    return frontal("slot_bezel")
-
-
-@dxf(out="../DXF/box/ipad_pocket.dxf")
-def ipad_pocket():
-    return frontal("ipad_pocket")
-
-
-@dxf(out="../DXF/box/ipad_backing.dxf")
-def ipad_backing():
-    return frontal("ipad_backing")
 
 
 def plain(name):
     return lay_flat(parts()[name], frontal=False)
 
 
+@dxf(out="../DXF/box/front.dxf")
+def front():
+    return frontal("front", front_engraving())
+
+
 @dxf(out="../DXF/box/back.dxf")
 def back():
-    return plain("back")
+    return frontal("back")
+
+
+@dxf(out="../DXF/box/ipad_holder.dxf")
+def ipad_holder():
+    return frontal("ipad_holder")
+
+
+@dxf(out="../DXF/box/lock_bar.dxf")
+def lock_bar():
+    return frontal("lock_bar")
 
 
 @dxf(out="../DXF/box/left.dxf")
@@ -113,26 +118,11 @@ def bottom():
     return plain("bottom")
 
 
-@dxf(out="../DXF/box/divider.dxf")
-def divider():
-    return plain("divider")
-
-
 @dxf(out="../DXF/box/deck.dxf")
 def deck():
     return plain("deck")
 
 
-@dxf(out="../DXF/box/post_layer.dxf")
-def post_layer():
-    """Cut 12. Glue three together for each corner post; press an M4 threaded insert into the hole."""
-    with bd.BuildSketch() as s:
-        bd.Rectangle(POST, POST)
-        bd.Circle(INSERT_HOLE / 2, mode=bd.Mode.SUBTRACT)
-    return s.sketch
-
-
 if __name__ == "__main__":
-    for model in (front, back, left, right, top, bottom, deck, divider, ipad_pocket, ipad_backing,
-                  ipad_frame, slot_bezel, sign_disc, post_layer):
+    for model in (front, back, left, right, top, bottom, deck, ipad_holder, lock_bar):
         model()

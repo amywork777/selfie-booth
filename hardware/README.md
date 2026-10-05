@@ -8,59 +8,53 @@ Two designs:
 
 ## Laser-cut box
 
-A 393 x 270 x 265 mm finger-jointed box in 6 mm (1/4 in) plywood. A 14 in MacBook Pro lies closed in
-a bay across the bottom; a deck over it carries the iPad mini behind a window on the left and the
-Rollo behind the print slot on the right, with its labels behind it. The back comes off with four
-thumb screws (the MacBook slides out that way), and the power cords leave through a notch in it. Small
-heart vents run low along both sides and the back for the MacBook. Every piece cuts on a Glowforge
-in one go.
+Nine pieces of 6 mm (1/4 in) plywood, **no screws or hardware**: just wood glue for the box itself.
+393 x 270 x 265 mm, finger-jointed, and every piece cuts on a Glowforge in one go.
 
-**Keeping the MacBook awake with its lid closed:** a closed MacBook sleeps unless it's in Apple's
-"clamshell mode", which needs its charger connected and a display attached. Plug a **HDMI dummy plug**
-(about $8, "4K HDMI headless display emulator") into its HDMI port and keep the charger in. Then do the
-one-time "Start Automatically" setup from START HERE with the lid open, close it, and it keeps running.
+Inside: a 14 in MacBook Pro lies closed in a bay across the bottom. A deck over it carries the iPad
+mini on the left (standing on the deck, pressed against the front window by one holder plate) and
+the Rollo on the right behind the print slot, with its labels behind it. The front is engraved: a
+frame band round the iPad, a round "tap the screen and smile" sign and a line round the print slot.
 
-**Cut files** (`DXF/box/`, `CUT` layer cuts, `ENGRAVE` layer engraves):
+The back is removable: two tabs on its bottom edge drop into slots in the floor, and a **lock bar**
+slides through both side walls just behind it. Pull the bar out by its heart handle, tip the back
+out, and the MacBook slides out the back.
 
-| Part | Cut | Notes |
-| --- | --- | --- |
-| front | 1 | iPad window (the whole iPad face shows, camera included) and print slot |
-| ipad_frame | 1 | raised frame glued round the window; "selfie booth" engraved along its top |
-| back | 1 | thumb-screw holes, cord notch, heart vents |
-| left, right | 1 each | finger joints, slots for the deck's tabs, low heart vents for the MacBook |
-| top | 1 | plain: glued onto the divider's top edge |
-| bottom | 1 | the box sits flat on the table; the MacBook lies on it |
-| deck | 1 | over the MacBook's bay; the iPad side, printer and labels stand on it; cable holes down |
-| divider | 1 | between the iPad and printer sides, standing on the deck |
-| ipad_pocket | 1 | glue to the back of the front panel, round the window |
-| ipad_backing | 1 | screws to the pocket and holds the iPad in |
-| slot_bezel | 1 | glue round the print slot on the front |
-| sign_disc | 1 | "tap the screen and smile"; glue above the slot |
-| post_layer | 12 | glue 3 together for each of the 4 corner posts |
+**Cut files** (`DXF/box/`, `CUT` layer cuts, `ENGRAVE` layer engraves), one of each:
 
-**Also needed:** wood glue; 4 x M4 thumb screws (about 12 mm) and 4 x M4 threaded inserts for wood;
-4 x small wood screws (M3 x 10 or #4 x 3/8 in) for the iPad backing; a right-angle USB-C cable for the
-iPad; a USB-C to USB-A adapter for the printer cable; an HDMI dummy plug for the MacBook.
+| Part | What it does |
+| --- | --- |
+| front | iPad window (94% of the iPad face shows, camera included) and print slot; engraved decoration |
+| left, right | finger joints, slots for the deck's tabs and the lock bar, low heart vents for the MacBook |
+| top, bottom | finger joints; the bottom has slots for the back's tabs |
+| deck | over the MacBook; notch for the iPad's cable, hole for the printer's cable, slots for the holder |
+| ipad_holder | presses the iPad against the window; tabs into the deck |
+| back | drops into the floor slots; cord notch, heart vents |
+| lock_bar | slides through the side walls to hold the back on; heart handle |
+
+**Also needed:** wood glue; a straight USB-C cable for the iPad (it plugs down through the deck); a
+USB-C to USB-A adapter for the printer cable; an HDMI dummy plug for the MacBook (see below).
 
 **Assembly:**
 
-1. Glue the iPad pocket to the back of the front panel, centred on the window. Glue the iPad frame,
-   the slot bezel and the round sign to the front.
-2. Glue the box together: front, bottom, sides, the deck (tabbed through the sides), the divider
-   (tabbed into the deck), then the top. Leave the back off.
-3. Glue up the four corner posts (3 layers each). Press an M4 insert into each post and glue the posts
-   into the back corners.
-4. Put the iPad face down in its pocket, run its cable down through the deck, and screw the backing
-   plate on.
-5. Slide the MacBook (lid closed, dummy plug in) into the bay from the back. Printer on the deck pushed
-   to the front, labels behind it feeding into the printer. Cables down through the deck holes to the
-   MacBook, cords out through the back notch.
-6. Thumb-screw the back on.
+1. Glue the box: front, bottom, sides, the deck (tabs through the sides), then the top.
+2. Plug the iPad's cable into it from below through the deck notch, stand the iPad on the deck face
+   against the window, and press the holder plate's tabs into the deck behind it.
+3. Printer on the deck, pushed to the front; labels behind it feeding in. Cables down through the
+   deck to the MacBook.
+4. Slide the MacBook (lid closed, dummy plug in, charger connected) into the bay from the back.
+5. Drop the back's tabs into the floor slots, tip it upright, and slide the lock bar through the side
+   walls behind it until the heart handle stops it.
 
-**Before cutting:** measure the printer (published size: 195 x 75 x 85 mm). The print slot is 130 x 60 mm
-and covers the whole upper part of the printer's front, so the label gets out wherever it leaves the
-printer; no need to measure that. Do a test cut of one finger joint
-in your plywood first: real 1/4 in plywood is often thinner than 6 mm (change `T`).
+**Keeping the MacBook awake with its lid closed:** a closed MacBook sleeps unless it's in Apple's
+"clamshell mode", which needs its charger connected and a display attached. Plug an **HDMI dummy
+plug** (about $8, "4K HDMI headless display emulator") into its HDMI port and keep the charger in.
+Do the one-time "Start Automatically" setup from START HERE with the lid open, then close it.
+
+**Before cutting:** measure the printer (published size: 195 x 75 x 85 mm). The print slot is 130 x
+60 mm and covers the whole upper part of the printer's front, so the label gets out wherever it leaves
+the printer. Measure your plywood and cut one test joint first: real 1/4 in plywood is often thinner
+than 6 mm (change `T` in `src/box_dims.py` and rebuild).
 
 Rebuild and check: `.venv/bin/python src/box.py && .venv/bin/python src/box_parts.py && .venv/bin/python checks/box_check.py`
 

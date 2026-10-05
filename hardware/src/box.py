@@ -1,8 +1,9 @@
-"""The laser-cut convention box, built as 3D plywood parts so fit can be checked before cutting.
+"""The laser-cut convention box: nine plywood pieces, no screws, built in 3D so fit can be checked
+before cutting.
 
 Finger joints: each panel starts as a full slab; where two panels overlap along an edge, the overlap
 is split into fingers and each finger is kept by one panel and cut from the other. The front panel
-keeps the corners, so its outline is clean from the front.
+keeps the corners, so its outline is clean from the front. Glue the box; the back stays removable.
 """
 
 from __future__ import annotations
@@ -11,16 +12,15 @@ from cadgen import build123d as bd
 from cadgen import srgb, step
 
 from box_dims import (
-    D, DIVIDER_X, FINGER, H, INSERT_HOLE, IPAD_CORNER_R, IPAD_CX, IPAD_CZ, IPAD_FRAME, IPAD_H, WINDOW_H, WINDOW_W,
-    IPAD_T, IPAD_W, LABELS_D, LABELS_H, LABELS_W, MBP_D, MBP_H, MBP_W, POST, POST_LAYERS, PRINTER_CX,
-    PRINTER_D, PRINTER_H, PRINTER_W, PRINTER_Y0, PRINTER_ZONE_X0, PRINTER_ZONE_X1,
-    BAY_Z0, DECK_TOP, SIGN_CZ, SIGN_D, SLOT_BEZEL, SLOT_W, SLOT_Z0, SLOT_Z1, T, THUMB_SCREW_HOLE, W,
+    BACK_Y0, BAR_FIT, BAR_H, BAR_Y0, BAR_Z0, BAY_Z0, CABLE_NOTCH_D, CABLE_NOTCH_W, D, DECK_TOP, FINGER, H,
+    HOLDER_FIT, IPAD_CORNER_R, IPAD_CX, IPAD_CZ, IPAD_H, IPAD_T, IPAD_W, IPAD_Z0, LABELS_D, LABELS_H, LABELS_W,
+    MBP_D, MBP_H, MBP_W, PRINTER_CX, PRINTER_D, PRINTER_H, PRINTER_W, PRINTER_Y0, SLOT_W, SLOT_Z0, SLOT_Z1, T,
+    TAB, W, WINDOW_H, WINDOW_W,
 )
-from panels import heart, text
+from panels import heart
 
-TAB = 30.0  # tab length for the divider's and deck's tabs
-POCKET_MARGIN = 14.0  # plywood round the iPad in the pocket plate
-IPAD_FIT = 0.6  # clearance round the iPad in its pocket
+HOLDER_W, HOLDER_H = 110.0, 140.0  # plate behind the iPad
+BAR_KNOB = 34.0  # heart-shaped handle on the lock bar, wider than its slot so it stops there
 
 
 def box(x0, x1, y0, y1, z0, z1):
@@ -55,150 +55,108 @@ def finger_joint(parts, a, b):
             parts[a] = parts[a] - seg
 
 
-def ipad_box():
-    """Where the iPad sits: face against the back of the front panel."""
-    return (IPAD_CX - IPAD_W / 2, IPAD_CX + IPAD_W / 2, T, T + IPAD_T, IPAD_CZ - IPAD_H / 2, IPAD_CZ + IPAD_H / 2)
+def through_tab(parts, tabbed, slotted, tab):
+    """A tab on one piece passing through a matching slot in another."""
+    parts[tabbed] = parts[tabbed] + tab
+    parts[slotted] = parts[slotted] - tab
 
 
-def front_sketch_features():
-    """iPad window and print slot, as solids to cut through the front panel."""
+def xz_cut(sketch, y0, depth):
+    """Extrude a sketch drawn in front-view (X, Z) coordinates from Y=y0 back by `depth`."""
+    return bd.extrude(sketch, amount=-depth).moved(bd.Location((0, y0, 0)))  # Plane.XZ faces -Y
+
+
+def front_openings():
+    """iPad window and print slot, to cut through the front panel."""
     with bd.BuildSketch(bd.Plane.XZ) as cuts:
         with bd.Locations((IPAD_CX, IPAD_CZ)):
             bd.RectangleRounded(WINDOW_W, WINDOW_H, IPAD_CORNER_R - 2.5)
         with bd.Locations((PRINTER_CX, (SLOT_Z0 + SLOT_Z1) / 2)):
-            bd.RectangleRounded(SLOT_W, SLOT_Z1 - SLOT_Z0, 8)
-    # Plane.XZ's normal points to -Y; extrude back through the panel.
-    return bd.extrude(cuts.sketch, amount=-(T + 1))
+            bd.RectangleRounded(SLOT_W, SLOT_Z1 - SLOT_Z0, 10)
+    return xz_cut(cuts.sketch, -1, T + 2)
 
 
 def make_parts():
     parts = {
         "front": box(0, W, 0, T, 0, H),
-        "left": box(0, T, 0, D - T, 0, H),
-        "right": box(W - T, W, 0, D - T, 0, H),
-        "bottom": box(0, W, 0, D - T, 0, T),
-        "top": box(0, W, 0, D - T, H - T, H),
+        "left": box(0, T, 0, D, 0, H),
+        "right": box(W - T, W, 0, D, 0, H),
+        "bottom": box(0, W, 0, D, 0, T),
+        "top": box(0, W, 0, D, H - T, H),
     }
     for a, b in [("front", "left"), ("front", "right"), ("front", "bottom"), ("front", "top"),
                  ("bottom", "left"), ("bottom", "right"), ("top", "left"), ("top", "right")]:
         finger_joint(parts, a, b)
+    parts["front"] = parts["front"] - front_openings()
 
-    # Deck across the whole box over the MacBook's bay; its tabs go through slots in both side walls.
-    parts["deck"] = box(T, W - T, T, D - T, BAY_Z0, DECK_TOP)
-    for x0 in (0, W - T):
-        for y in (D * 0.3, D * 0.7):
-            tab = box(x0, x0 + T, y - TAB / 2, y + TAB / 2, BAY_Z0, DECK_TOP)
-            parts["deck"] = parts["deck"] + tab
-            parts["left" if x0 == 0 else "right"] = parts["left" if x0 == 0 else "right"] - tab
-    # Cable holes down to the MacBook, at the back of each side: the iPad's and the printer's cables.
-    for cx in (IPAD_CX, PRINTER_CX):
-        parts["deck"] = parts["deck"] - box(cx - 22, cx + 22, D - T - 40, D - T - 12, BAY_Z0 - 1, DECK_TOP + 1)
+    # Deck over the MacBook's bay, tabbed through both side walls. It stops at the back panel.
+    parts["deck"] = box(T, W - T, T, BACK_Y0, BAY_Z0, DECK_TOP)
+    for side, x0 in (("left", 0), ("right", W - T)):
+        for y in (D * 0.3, D * 0.65):
+            through_tab(parts, "deck", side, box(x0, x0 + T, y - TAB / 2, y + TAB / 2, BAY_Z0, DECK_TOP))
+    # Notch for the iPad's USB-C plug, straight down; and a hole at the back for the printer's cable.
+    parts["deck"] = parts["deck"] - box(IPAD_CX - CABLE_NOTCH_W / 2, IPAD_CX + CABLE_NOTCH_W / 2, T - 1, T + CABLE_NOTCH_D, BAY_Z0 - 1, DECK_TOP + 1)
+    parts["deck"] = parts["deck"] - box(PRINTER_CX - 22, PRINTER_CX + 22, BACK_Y0 - 40, BACK_Y0 - 12, BAY_Z0 - 1, DECK_TOP + 1)
 
-    # Divider between the iPad side and the printer side, standing on the deck; the top glues onto it.
-    parts["divider"] = box(DIVIDER_X, DIVIDER_X + T, T, D - T, DECK_TOP, H - T)
-    for y in (D * 0.3, D * 0.7):
-        tab = box(DIVIDER_X, DIVIDER_X + T, y - TAB / 2, y + TAB / 2, BAY_Z0, DECK_TOP)
-        parts["divider"] = parts["divider"] + tab
-        parts["deck"] = parts["deck"] - tab
-
-    # Front: iPad window and print slot.
-    parts["front"] = parts["front"] - front_sketch_features()
-
-    # iPad pocket plate (glued to the back of the front panel) and the backing plate that holds it in.
-    ix0, ix1, _, _, iz0, iz1 = ipad_box()
-    m = POCKET_MARGIN
-    pocket = box(ix0 - m, ix1 + m, T, 2 * T, iz0 - m, iz1 + m) - box(ix0 - IPAD_FIT, ix1 + IPAD_FIT, T - 1, 2 * T + 1, iz0 - IPAD_FIT, iz1 + IPAD_FIT)
-    backing = box(ix0 - m, ix1 + m, 2 * T + 0.3, 3 * T + 0.3, iz0 - m, iz1 + m)
-    screw_pts = [(ix0 - m / 2, iz0 - m / 2), (ix1 + m / 2, iz0 - m / 2), (ix0 - m / 2, iz1 + m / 2), (ix1 + m / 2, iz1 + m / 2)]
-    for x, z in screw_pts:
-        hole = bd.Cylinder(1.6, 4 * T, rotation=(90, 0, 0)).moved(bd.Location((x, 2 * T, z)))
-        backing = backing - hole
-        pocket = pocket - bd.Cylinder(1.2, 4 * T, rotation=(90, 0, 0)).moved(bd.Location((x, 2 * T, z)))
-    # Notch in the backing plate for the USB-C cable at the iPad's bottom edge, and a big heart window.
-    backing = backing - box(IPAD_CX - 15, IPAD_CX + 15, 2 * T, 4 * T, iz0 - m - 1, iz0 + 12)
+    # iPad holder: one plate behind the iPad, tabbed into the deck, pressing it against the window.
+    hy0 = T + IPAD_T + HOLDER_FIT
+    holder = box(IPAD_CX - HOLDER_W / 2, IPAD_CX + HOLDER_W / 2, hy0, hy0 + T, DECK_TOP, DECK_TOP + HOLDER_H)
     with bd.BuildSketch(bd.Plane.XZ) as hw:
-        bd.add(heart(IPAD_CX, IPAD_CZ + 6, 92))
-    backing = backing - bd.extrude(hw.sketch, amount=-(4 * T))
-    parts["ipad_pocket"] = pocket
-    parts["ipad_backing"] = backing
+        bd.add(heart(IPAD_CX, DECK_TOP + HOLDER_H / 2 + 6, 70))
+    parts["ipad_holder"] = holder - xz_cut(hw.sketch, hy0 - 1, T + 2)
+    for dx in (-32, 32):
+        through_tab(parts, "ipad_holder", "deck", box(IPAD_CX + dx - 12, IPAD_CX + dx + 12, hy0, hy0 + T, BAY_Z0, DECK_TOP))
 
-    # Raised frame round the iPad window, glued on the front face, so the screen stands out.
-    with bd.BuildSketch(bd.Plane.XZ) as fr:
-        with bd.Locations((IPAD_CX, IPAD_CZ)):
-            bd.RectangleRounded(WINDOW_W + 2 * IPAD_FRAME, WINDOW_H + 2 * IPAD_FRAME, IPAD_CORNER_R - 2.5 + IPAD_FRAME)
-            bd.RectangleRounded(WINDOW_W, WINDOW_H, IPAD_CORNER_R - 2.5, mode=bd.Mode.SUBTRACT)
-    parts["ipad_frame"] = bd.extrude(fr.sketch, amount=T)
-
-    # Raised bezel round the print slot, and the round sign, glued on the front face.
-    with bd.BuildSketch(bd.Plane.XZ) as bz:
-        with bd.Locations((PRINTER_CX, (SLOT_Z0 + SLOT_Z1) / 2)):
-            bd.RectangleRounded(SLOT_W + 2 * SLOT_BEZEL, SLOT_Z1 - SLOT_Z0 + 2 * SLOT_BEZEL, 8 + SLOT_BEZEL)
-            bd.RectangleRounded(SLOT_W, SLOT_Z1 - SLOT_Z0, 8, mode=bd.Mode.SUBTRACT)
-    parts["slot_bezel"] = bd.extrude(bz.sketch, amount=T)  # Plane.XZ normal is -Y: sits in front of the panel
-    parts["sign_disc"] = bd.Cylinder(SIGN_D / 2, T, rotation=(90, 0, 0), align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN)).moved(
-        bd.Location((PRINTER_CX, 0, SIGN_CZ))
-    )
-
-    # Corner posts at the back for the thumb screws, three layers each, glued into the corners.
-    posts = []
-    for x0 in (T, W - T - POST):
-        for z0 in (T, H - T - POST):
-            post = box(x0, x0 + POST, D - T - POST_LAYERS * T, D - T, z0, z0 + POST)
-            post = post - bd.Cylinder(INSERT_HOLE / 2, POST_LAYERS * T + 2, rotation=(90, 0, 0)).moved(
-                bd.Location((x0 + POST / 2, D - T - POST_LAYERS * T / 2, z0 + POST / 2))  # through all layers
-            )
-            posts.append(post)
-    parts["posts"] = bd.Compound(posts)
-
-    # Back panel: thumb-screw holes, cable notch, heart vents.
-    back = box(0, W, D - T, D, 0, H)
-    for x0 in (T, W - T - POST):
-        for z0 in (T, H - T - POST):
-            back = back - bd.Cylinder(THUMB_SCREW_HOLE / 2, T + 2, rotation=(90, 0, 0)).moved(
-                bd.Location((x0 + POST / 2, D - T / 2, z0 + POST / 2))
-            )
-    back = back - box(PRINTER_CX - 30, PRINTER_CX + 30, D - T - 1, D + 1, -1, 22)  # power cords out
+    # Back: sits between the side walls; two tabs drop into slots in the floor; cord notch; vents.
+    parts["back"] = box(T, W - T, BACK_Y0, BACK_Y0 + T, T, H - T)
+    back_tabs_x = (W * 0.28, W * 0.72)
+    for x in back_tabs_x:
+        through_tab(parts, "back", "bottom", box(x - TAB / 2, x + TAB / 2, BACK_Y0, BACK_Y0 + T, 0, T))
+    cord_x = W / 2  # cord notch, midway between the floor tabs
+    parts["back"] = parts["back"] - box(cord_x - 30, cord_x + 30, BACK_Y0 - 1, BACK_Y0 + T + 1, T - 1, T + 22)
     with bd.BuildSketch(bd.Plane.XZ) as vents:
         for i, x in enumerate((PRINTER_CX - 60, PRINTER_CX, PRINTER_CX + 60)):
-            for z in (95, 150):
+            for z in (110, 165):
                 bd.add(heart(x, z + (8 if i % 2 else 0), 34))
-    back = back - bd.extrude(vents.sketch, amount=-(D + 1))
-    parts["back"] = back
+        for i, x in enumerate(range(40, int(W - 30), 30)):
+            if abs(x - cord_x) > 42 and all(abs(x - tx) > 24 for tx in back_tabs_x):
+                bd.add(heart(x, T + 12 + (2 if i % 2 else 0), 16))
+    parts["back"] = parts["back"] - xz_cut(vents.sketch, BACK_Y0 - 1, T + 2)
 
-    # Air for the closed MacBook: small hearts low in both side walls and along the bottom of the back.
+    # Lock bar: slides through both side walls just behind the back panel; the heart handle stops it.
+    with bd.BuildSketch(bd.Plane.XZ) as bar_sketch:
+        with bd.Locations(((W - 6) / 2, BAR_Z0 + BAR_H / 2)):
+            bd.Rectangle(W + 10, BAR_H)
+        bd.add(heart(W + 2 + BAR_KNOB * 0.42, BAR_Z0 + BAR_H / 2, BAR_KNOB))
+    parts["lock_bar"] = xz_cut(bar_sketch.sketch, BAR_Y0, T)
+    for side, x0 in (("left", 0), ("right", W - T)):
+        slot = box(x0 - 1, x0 + T + 1, BAR_Y0 - BAR_FIT, BAR_Y0 + T + BAR_FIT, BAR_Z0 - BAR_FIT, BAR_Z0 + BAR_H + BAR_FIT)
+        parts[side] = parts[side] - slot
+
+    # Air for the closed MacBook: small hearts low in both side walls.
     with bd.BuildSketch(bd.Plane.YZ) as side_vents:
-        for i, y in enumerate(range(40, int(D - 40), 34)):
+        for i, y in enumerate(range(40, int(BACK_Y0 - 20), 34)):
             bd.add(heart(y, T + 10 + (2 if i % 2 else 0), 16))
     side_cut = bd.extrude(side_vents.sketch, amount=W + 1)
     parts["left"] = parts["left"] - side_cut
     parts["right"] = parts["right"] - side_cut
-    with bd.BuildSketch(bd.Plane.XZ) as back_vents:
-        for i, x in enumerate(range(40, int(W - 30), 30)):
-            if abs(x - PRINTER_CX) > 40:  # leave the cord notch alone
-                bd.add(heart(x, T + 10 + (2 if i % 2 else 0), 16))
-    parts["back"] = parts["back"] - bd.extrude(back_vents.sketch, amount=-(D + 1))
-
     return parts
 
 
 def standins():
     """Not parts: the things that go inside, for checking fit."""
-    ix0, ix1, iy0, iy1, iz0, iz1 = ipad_box()
-    deck_top = DECK_TOP
     return {
-        "rollo_standin": box(PRINTER_CX - PRINTER_W / 2, PRINTER_CX + PRINTER_W / 2, PRINTER_Y0, PRINTER_Y0 + PRINTER_D, deck_top, deck_top + PRINTER_H),
-        "labels_standin": box(PRINTER_CX - LABELS_W / 2, PRINTER_CX + LABELS_W / 2, PRINTER_Y0 + PRINTER_D + 6, PRINTER_Y0 + PRINTER_D + 6 + LABELS_D, deck_top, deck_top + LABELS_H),
-        "macbook_standin": box(W / 2 - MBP_W / 2, W / 2 + MBP_W / 2, T + 10, T + 10 + MBP_D, T, T + MBP_H),
-        "ipad_standin": box(ix0, ix1, iy0, iy1, iz0, iz1),
+        "rollo_standin": box(PRINTER_CX - PRINTER_W / 2, PRINTER_CX + PRINTER_W / 2, PRINTER_Y0, PRINTER_Y0 + PRINTER_D, DECK_TOP, DECK_TOP + PRINTER_H),
+        "labels_standin": box(PRINTER_CX - LABELS_W / 2, PRINTER_CX + LABELS_W / 2, PRINTER_Y0 + PRINTER_D + 4, PRINTER_Y0 + PRINTER_D + 4 + LABELS_D, DECK_TOP, DECK_TOP + LABELS_H),
+        "macbook_standin": box(W / 2 - MBP_W / 2, W / 2 + MBP_W / 2, T + 6, T + 6 + MBP_D, T, T + MBP_H),
+        "ipad_standin": box(IPAD_CX - IPAD_W / 2, IPAD_CX + IPAD_W / 2, T, T + IPAD_T, IPAD_Z0, IPAD_Z0 + IPAD_H),
     }
 
 
 COLOURS = {
     "front": "#E9C9A0", "back": "#D9B68A", "left": "#E2BF93", "right": "#E2BF93", "top": "#EDD0A8",
-    "bottom": "#D4AE80", "divider": "#CFA676", "deck": "#CFA676", "ipad_pocket": "#C99D6B",
-    "ipad_backing": "#C29462", "slot_bezel": "#F0D7B4", "sign_disc": "#F7EBC8", "posts": "#B98A58",
-    "ipad_frame": "#F0D7B4", "rollo_standin": "#F2F2F2", "labels_standin": "#FFFFFF", "macbook_standin": "#B8BCC2",
-    "ipad_standin": "#2B2B2E",
+    "bottom": "#D4AE80", "deck": "#CFA676", "ipad_holder": "#C29462", "lock_bar": "#B98A58",
+    "rollo_standin": "#F2F2F2", "labels_standin": "#FFFFFF", "macbook_standin": "#B8BCC2", "ipad_standin": "#2B2B2E",
 }
 
 
