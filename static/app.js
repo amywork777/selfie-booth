@@ -17,7 +17,10 @@ const saved = (key, options, fallback) => (options[localStorage.getItem(key)] ? 
 const settings = {
   count: saved('booth:count', COUNTS, 'one'),
   pattern: saved('booth:pattern', PATTERNS, 'plain'),
-  caption: '', // each guest writes their own
+  // Captions: 'guest' (each guest types one in step 3) or 'event' (one caption set in Settings).
+  captionMode: localStorage.getItem('booth:captionMode') === 'event' ? 'event' : 'guest',
+  eventCaption: localStorage.getItem('booth:eventCaption') ?? '',
+  caption: '', // the caption on this guest's print
   showDate: localStorage.getItem('booth:date') !== 'false',
   sound: localStorage.getItem('booth:sound') !== 'false',
 }
@@ -201,26 +204,29 @@ function backToLive() {
   idle()
 }
 
-/** Back to step 1, ready for the next guest: their caption starts blank. */
+/** Back to step 1, ready for the next guest: a blank caption, or the event's. */
 function backToStart() {
   backToLive()
-  settings.caption = ''
-  $('caption').value = ''
+  resetCaption()
   showStep('count')
 }
 
-const STEP_TITLES = {
-  count: ['Step 1 of 4', 'How many photos?'],
-  pattern: ['Step 2 of 4', 'Pick a pattern'],
-  caption: ['Step 3 of 4', 'Add a caption'],
-  live: ['Step 4 of 4', 'Smile!'],
+const eventMode = () => settings.captionMode === 'event'
+function resetCaption() {
+  settings.caption = eventMode() ? settings.eventCaption : ''
+  $('caption').value = ''
+  lastTiles = 0
 }
+
+// With one caption for everyone, guests skip the caption step.
+const steps = () => (eventMode() ? ['count', 'pattern', 'live'] : ['count', 'pattern', 'caption', 'live'])
+const STEP_TITLES = { count: 'How many photos?', pattern: 'Pick a pattern', caption: 'Add a caption', live: 'Smile!' }
 function showStep(step) {
   if (step !== 'live') stopCamera() // the camera only runs on the photo step
   setState(step)
-  const [num, title] = STEP_TITLES[step]
+  const all = steps()
   const heading = step === 'count' || step === 'pattern' ? $('pick-title') : $('step-title')
-  heading.innerHTML = `<span class="step-num">${num}</span>${title}`
+  heading.innerHTML = `<span class="step-num">Step ${all.indexOf(step) + 1} of ${all.length}</span>${STEP_TITLES[step]}`
   lastTiles = 0
   syncTiles()
   if (step === 'caption') render(canvas, [], { ...settings, scale: LIVE_SCALE })
@@ -245,8 +251,9 @@ function pick(step, key) {
 }
 
 function next() {
-  if (state === 'count') return showStep('pattern')
-  if (state === 'pattern') return showStep('caption')
+  const all = steps()
+  const following = all[all.indexOf(state) + 1]
+  if (following !== 'live') return showStep(following)
   $('caption').blur() // drop the keyboard before the camera
   log(`chosen: ${settings.count}, ${settings.pattern}, "${settings.caption}"`)
   showStep('live')
@@ -312,9 +319,29 @@ function buildTiles(step, options) {
 }
 
 function syncControls() {
-  $('date').setAttribute('aria-pressed', String(settings.showDate))
+  for (const id of ['date', 'event-date']) $(id).setAttribute('aria-pressed', String(settings.showDate))
   $('sound').setAttribute('aria-pressed', String(settings.sound))
+  $('mode-guest').setAttribute('aria-checked', String(!eventMode()))
+  $('mode-event').setAttribute('aria-checked', String(eventMode()))
+  $('event-caption').hidden = !eventMode()
 }
+
+function setCaptionMode(mode) {
+  settings.captionMode = mode
+  localStorage.setItem('booth:captionMode', mode)
+  resetCaption()
+  syncControls()
+  showStep(state) // step numbers change
+}
+$('mode-guest').onclick = () => setCaptionMode('guest')
+$('mode-event').onclick = () => setCaptionMode('event')
+$('event-caption').value = settings.eventCaption
+$('event-caption').oninput = (e) => {
+  settings.eventCaption = e.target.value
+  localStorage.setItem('booth:eventCaption', settings.eventCaption)
+  resetCaption()
+}
+$('event-caption').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur() }
 
 $('caption').value = settings.caption
 $('caption').oninput = (e) => {
@@ -322,7 +349,7 @@ $('caption').oninput = (e) => {
   rerender()
 }
 $('caption').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur() }
-$('date').onclick = () => {
+$('date').onclick = $('event-date').onclick = () => {
   settings.showDate = !settings.showDate
   localStorage.setItem('booth:date', settings.showDate)
   syncControls()
@@ -336,9 +363,10 @@ $('sound').onclick = () => {
 $('shoot').onclick = shoot
 $('retake').onclick = backToLive
 $('back').onclick = () => {
-  if (state === 'caption') return showStep('pattern')
-  backToLive()
-  showStep('caption')
+  const all = steps()
+  const before = all[all.indexOf(state === 'live' ? 'live' : state) - 1]
+  if (state !== 'caption') backToLive()
+  showStep(before)
 }
 $('to-photo').onclick = next
 $('prev').onclick = () => showStep('count')
@@ -368,6 +396,7 @@ async function pollStatus() {
 
 buildTiles('count', COUNTS)
 buildTiles('pattern', PATTERNS)
+resetCaption()
 showStep('count')
 syncControls()
 pollStatus()

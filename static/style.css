@@ -125,6 +125,8 @@ body:not([data-state="count"]):not([data-state="pattern"]) #settings { display: 
 @media (orientation: landscape) and (min-width: 900px) { #pattern-tiles { grid-template-columns: repeat(5, minmax(0, min(200px, calc((100dvh - 420px) * 0.62)))); } }
 [data-state="count"] #prev { visibility: hidden; }
 .host[hidden] { display: none; }
+.host .field { align-content: start; }
+#event-caption[hidden] { display: none; }
 .tiles {
   display: grid; grid-template-columns: repeat(4, minmax(0, 200px)); justify-content: center; gap: 28px 22px;
   align-content: start; overflow-y: auto; padding: 14px 14px 14px 14px; -webkit-overflow-scrolling: touch;

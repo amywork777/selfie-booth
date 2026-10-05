@@ -25,8 +25,17 @@
       <div class="tiles" id="pattern-tiles" role="radiogroup" aria-labelledby="pick-title"></div>
       <div class="host" id="host" hidden>
         <div class="field">
-          <span class="label">Booth settings</span>
+          <span class="label" id="caption-mode-label">Captions</span>
+          <div class="choices" role="radiogroup" aria-labelledby="caption-mode-label">
+            <button type="button" class="choice" role="radio" id="mode-guest">Guests write their own</button>
+            <button type="button" class="choice" role="radio" id="mode-event">Same for everyone</button>
+          </div>
+          <input id="event-caption" type="text" maxlength="28" placeholder="Event caption, like amy's 30th" autocomplete="off" enterkeyhint="done" aria-label="Event caption">
+        </div>
+        <div class="field">
+          <span class="label">Booth</span>
           <div class="choices">
+            <button type="button" class="choice" id="event-date" aria-pressed="true">Date</button>
             <button type="button" class="choice" id="sound" aria-pressed="true">Sound</button>
           </div>
         </div>
