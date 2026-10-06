@@ -10,6 +10,7 @@
     /* Toy route (taste/routes/toy.md), same tokens as index.html. */
     @font-face { font-family: "Doto"; src: url(fonts/doto.woff2) format("woff2"); font-weight: 100 900; }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body { margin: 0; background: var(--bg); color: var(--ink); font: 500 var(--text-body)/1.45 var(--font-sans); }
     main { max-width: 1040px; margin: 0 auto; padding: 56px 28px 80px; }
     h1 { margin: 0; font: 900 clamp(44px, 8vw, 96px)/0.95 var(--font-display); letter-spacing: var(--tracking-display); }
@@ -41,8 +42,16 @@
     .sheet svg { display: block; width: 100%; height: auto; background: #fff; border-radius: 6px; }
     .sheet figcaption { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 15px; }
     .sheet a { color: var(--ink); font-weight: 700; }
-    #view { display: none; width: 100%; height: 520px; margin-top: 16px; border: 3px solid var(--rule);
-      border-radius: var(--radius-control); background: var(--surface); touch-action: none; }
+    #view { display: block; width: 100%; height: 520px; border: 3px solid var(--rule); border-bottom: 0;
+      border-radius: var(--radius-control) var(--radius-control) 0 0; background: var(--surface); touch-action: none; }
+    #tour { margin-top: 16px; }
+    .stop { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 16px 18px;
+      border: 3px solid var(--rule); border-radius: 0 0 var(--radius-control) var(--radius-control); background: #fff8d6; }
+    .stop p { flex: 1; min-width: 240px; margin: 0; }
+    .stop b { display: block; font-size: 22px; }
+    .stop .count { font-size: var(--text-small); color: var(--ink-soft); }
+    .stop button { margin: 0; padding: 12px 22px; font-size: 18px; }
+    .stop button:disabled { opacity: 0.35; cursor: default; }
     .small { font-size: var(--text-small); color: var(--ink-soft); }
     a { color: var(--ink); }
     @media (prefers-reduced-motion: reduce) { button, .button { transition: none; } }
@@ -75,10 +84,17 @@
   </section>
 
   <section class="step">
-    <span class="num">3</span><b>Check it in 3D</b> (optional).<br>
-    <button class="quiet" id="show3d">See it in 3D</button>
-    <canvas id="view"></canvas>
-    <p class="small" id="view-hint" hidden>Drag to turn it, pinch or scroll to zoom. Inside: the MacBook (grey), iPad (black) and printer (white).</p>
+    <span class="num">3</span><b>See inside in 3D</b> (optional): where the iPad, printer, print slot and paper go.<br>
+    <button class="quiet" id="show3d">Show me around</button>
+    <div id="tour" hidden>
+      <canvas id="view"></canvas>
+      <div class="stop">
+        <p><span class="count" id="count"></span><b id="stop-title"></b><span id="stop-text"></span></p>
+        <button class="quiet" id="back">Back</button>
+        <button id="next">Next</button>
+      </div>
+      <p class="small">You can also drag to turn it and scroll or pinch to zoom.</p>
+    </div>
   </section>
 
   <section class="step">
@@ -167,11 +183,18 @@ Different wood? Make new files: https://amywork777.github.io/selfie-booth/box.ht
     if (viewer) return;
     e.target.textContent = "Loading...";
     const { makeViewer } = await import("./box/view3d.js");
-    const canvas = document.getElementById("view");
-    canvas.style.display = "block";
-    document.getElementById("view-hint").hidden = false;
-    viewer = makeViewer(canvas, T);
+    document.getElementById("tour").hidden = false;
     e.target.hidden = true;
+    const back = document.getElementById("back"), next = document.getElementById("next");
+    viewer = makeViewer(document.getElementById("view"), T, (i, n, stop) => {
+      document.getElementById("count").textContent = `${i + 1} of ${n}`;
+      document.getElementById("stop-title").textContent = stop.title;
+      document.getElementById("stop-text").textContent = stop.text;
+      back.disabled = i === 0;
+      next.disabled = i === n - 1;
+    });
+    back.onclick = () => viewer.back();
+    next.onclick = () => viewer.next();
   };
 
   redraw();
