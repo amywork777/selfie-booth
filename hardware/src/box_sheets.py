@@ -1,7 +1,7 @@
 """The box's nine pieces laid out on seven 12 x 20 in sheets, ready to cut.
 
-Writes, for each sheet, a DXF (CUT and ENGRAVE layers) and an SVG for the Glowforge app, which doesn't
-open DXF: cut lines red, engraving filled black, so the app makes them separate steps.
+Writes, for each sheet, a DXF (CUT layer) and an SVG for the Glowforge app, which doesn't open DXF: red cut
+lines only, no engraving.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from pathlib import Path
 from cadgen import build123d as bd
 from cadgen import dxf
 
-from box_parts import front_engraving, lay_flat, parts
+from box_parts import lay_flat, parts
 
 SHEET_W, SHEET_H = 508.0, 304.8  # 20 x 12 in
 MARGIN = 6.0
@@ -33,26 +33,22 @@ SHEETS = {
 
 
 def piece(name):
-    """(cut, engrave) for one piece, flat in XY, lower-left corner at the origin."""
+    """One piece, flat in XY, lower-left corner at the origin."""
     cut = lay_flat(parts()[name], frontal=name in FRONTAL)
-    engrave = front_engraving() if name == "front" else None
     b = cut.bounding_box()
-    to_origin = bd.Location((-b.min.X, -b.min.Y))
-    return to_origin * cut, (to_origin * engrave if engrave is not None else None)
+    return bd.Location((-b.min.X, -b.min.Y)) * cut
 
 
 def layout(sheet):
     """Place a sheet's pieces in rows from the top-left, within the margins."""
-    cuts, engraves = [], []
+    cuts = []
     x, y, row_h = MARGIN, SHEET_H - MARGIN, 0.0
     for name, rotate in SHEETS[sheet]:
-        cut, eng = piece(name)
+        cut = piece(name)
         if rotate:
-            spin = bd.Location((0, 0, 0), (0, 0, 1), 90)
-            cut, eng = spin * cut, (spin * eng if eng is not None else None)
+            cut = bd.Location((0, 0, 0), (0, 0, 1), 90) * cut
             b = cut.bounding_box()
-            back = bd.Location((-b.min.X, -b.min.Y))
-            cut, eng = back * cut, (back * eng if eng is not None else None)
+            cut = bd.Location((-b.min.X, -b.min.Y)) * cut
         b = cut.bounding_box()
         w, h = b.size.X, b.size.Y
         if x + w > SHEET_W - MARGIN:  # next row
@@ -61,37 +57,22 @@ def layout(sheet):
         if x + w > SHEET_W - MARGIN or y - h < MARGIN:
             raise ValueError(f"{name} doesn't fit on {sheet}")
         cuts.append(at * cut)
-        if eng is not None:
-            engraves.append(at * eng)
         x, row_h = x + w + GAP, max(row_h, h)
-    return cuts, engraves
+    return cuts
 
 
 def sheet_layers(sheet):
-    cuts, engraves = layout(sheet)
-    layers = {"CUT": bd.Compound(cuts)}
-    if engraves:
-        layers["ENGRAVE"] = bd.Compound(engraves)
-    return layers
+    return {"CUT": bd.Compound(layout(sheet))}
 
 
 def write_svg(sheet):
-    """Glowforge-ready SVG: red cut lines (every hole is one), black filled engraving, at real size."""
-    cuts, engraves = layout(sheet)
+    """Glowforge-ready SVG: red cut lines only (every hole is one), at real size."""
     svg = bd.ExportSVG(unit=bd.Unit.MM, margin=0)
-    svg.add_layer("engrave", fill_color=(0, 0, 0), line_color=None)
     svg.add_layer("cut", fill_color=None, line_color=(255, 0, 0), line_weight=0.1)
-    for e in engraves:
-        svg.add_shape(e, layer="engrave")
-    for c in cuts:
+    for c in layout(sheet):
         svg.add_shape([edge for face in c.faces() for edge in face.edges()], layer="cut")
     OUT.mkdir(parents=True, exist_ok=True)
-    path = OUT / f"{sheet}.svg"
-    svg.write(str(path))
-    # Engraving shapes with holes in them (the frame band round the iPad window, letters like "o") must
-    # fill evenodd, or the Glowforge fills the hole too and engraves the whole window before cutting it.
-    text = path.read_text().replace('id="engrave"', 'id="engrave" fill-rule="evenodd"', 1)
-    path.write_text(text)
+    svg.write(str(OUT / f"{sheet}.svg"))
 
 
 @dxf(out="../DXF/box_sheets/sheet1_front.dxf")

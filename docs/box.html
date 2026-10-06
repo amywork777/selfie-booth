@@ -36,7 +36,6 @@
     .key { display: flex; gap: 24px; flex-wrap: wrap; margin: 14px 0 4px; }
     .key span { display: inline-flex; align-items: center; gap: 10px; }
     .line { width: 34px; border-top: 3px solid #f00; }
-    .fill { width: 30px; height: 18px; background: #000; border-radius: 3px; }
     .sheets { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 18px; }
     .sheet { margin: 0; background: var(--surface); border: 3px solid var(--rule); border-radius: var(--radius-control); padding: 10px; }
     .sheet svg { display: block; width: 100%; height: auto; background: #fff; border-radius: 6px; }
@@ -68,8 +67,7 @@
     <span class="num">2</span><b>Download the files.</b><br>
     <button id="zip">Download all 7 sheets</button>
     <div class="key">
-      <span><i class="line"></i>Red lines get cut. Every hole is a cut.</span>
-      <span><i class="fill"></i>Black gets engraved (front only).</span>
+      <span><i class="line"></i>Every red line gets cut, holes included. Nothing is engraved.</span>
     </div>
     <p class="small">In the Glowforge app, upload the sheets in the "Glowforge (SVG)" folder one at a time. Each sheet is
       12 x 20 in. Other laser cutters: use the "Other lasers (DXF)" folder.</p>
@@ -154,11 +152,10 @@
     files[`${dir}/READ ME FIRST.txt`] = strToU8(`Selfie booth box, for ${label(T)} mm thick wood
 
 Glowforge: upload the sheets in the "Glowforge (SVG)" folder, one at a time. Each is 12 x 20 in.
-  Red lines are cuts. Every hole is a red line, so it gets cut out.
-  Black areas are engraving (only on sheet 1, the front).
-  If the app asks: set red to Cut and black to Engrave.
+  Every red line is a cut, holes included. There is no engraving.
+  If the app asks: set red to Cut.
 
-Other laser cutters: use the "Other lasers (DXF)" folder, in millimetres. Layer CUT cuts, layer ENGRAVE engraves.
+Other laser cutters: use the "Other lasers (DXF)" folder, in millimetres. Everything is on layer CUT.
 
 How to put it together: https://amywork777.github.io/selfie-booth/box/guide.pdf
 Different wood? Make new files: https://amywork777.github.io/selfie-booth/box.html

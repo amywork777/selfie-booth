@@ -39,7 +39,6 @@ IPAD_CZ = IPAD_Z0 + IPAD_H / 2
 CABLE_NOTCH_W, CABLE_NOTCH_D = 24.0, 12.0
 WINDOW_LIP = 2.5  # the front panel overlaps the iPad by this much all round, so it can't come out
 WINDOW_W, WINDOW_H = IPAD_W - 2 * WINDOW_LIP, IPAD_H - 2 * WINDOW_LIP
-FRAME_BAND = 14.0  # engraved band round the window
 HOLDER_FIT = 0.4  # gap between the iPad's back and the holder plate
 
 # Printer side.
@@ -51,10 +50,6 @@ LABEL_EXIT_RANGE = (35.0, PRINTER_H)
 SLOT_W = 130.0
 SLOT_Z0 = DECK_TOP + LABEL_EXIT_RANGE[0]
 SLOT_Z1 = DECK_TOP + LABEL_EXIT_RANGE[1] + 5.0
-
-# Engraved round sign above the slot.
-SIGN_D = 104.0
-SIGN_CZ = 195.0
 
 # Back: inset from the rear by two thicknesses, so the lock bar runs behind it, inside the side walls.
 BACK_Y0 = D - 3 * T

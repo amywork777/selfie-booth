@@ -13,18 +13,17 @@ Nine pieces of 1/4 in (6.35 mm) MDF or plywood, **no screws or hardware**: just 
 
 Inside: a 14 in MacBook Pro lies closed in a bay across the bottom. A deck over it carries the iPad
 mini on the left (standing on the deck, pressed against the front window by one holder plate) and
-the Rollo on the right behind the print slot, with its labels behind it. The front is engraved: a
-frame band round the iPad, a round "tap the screen and smile" sign and a line round the print slot.
+the Rollo on the right behind the print slot, with its labels behind it. Cut only: nothing is engraved.
 
 The back is removable: two tabs on its bottom edge drop into slots in the floor, and a **lock bar**
 slides through both side walls just behind it. Pull the bar out by its heart handle, tip the back
 out, and the MacBook slides out the back.
 
-**Cut files** (`DXF/box/`, `CUT` layer cuts, `ENGRAVE` layer engraves), one of each:
+**Cut files** (`DXF/box/`, all on the `CUT` layer), one of each:
 
 | Part | What it does |
 | --- | --- |
-| front | iPad window (94% of the iPad face shows, camera included) and print slot; engraved decoration |
+| front | iPad window (94% of the iPad face shows, camera included) and print slot |
 | left, right | finger joints, slots for the deck's tabs and the lock bar |
 | top, bottom | finger joints; the bottom has slots for the back's tabs |
 | deck | over the MacBook; notch for the iPad's cable, hole for the printer's cable, slots for the holder |
@@ -53,9 +52,8 @@ Do the one-time "Start Automatically" setup from START HERE with the lid open, t
 
 **For any thickness of wood:** https://amywork777.github.io/selfie-booth/box.html redraws the cut files
 live for the thickness you type, shows the sheets, downloads them as a ZIP (Glowforge SVGs and DXFs) and shows
-the box in 3D. It rebuilds the pieces in JavaScript (`docs/box/box.js`), a port of `src/box.py`; the front's
-engraving comes from `src/box_web.py engraving`. After changing the box, rerun that and check the port still
-matches: `.venv/bin/python src/box_web.py reference 5.5 6.35 7 && node checks/box_web_check.mjs 5.5 6.35 7`.
+the box in 3D. It rebuilds the pieces in JavaScript (`docs/box/box.js`), a port of `src/box.py`. After changing the
+box, check the port still matches: `.venv/bin/python src/box_web.py reference 5.5 6.35 7 && node checks/box_web_check.mjs 5.5 6.35 7`.
 
 **Before cutting:** measure the printer (published size: 195 x 75 x 85 mm). The print slot is 130 x
 60 mm and covers the whole upper part of the printer's front, so the label gets out wherever it leaves
@@ -63,8 +61,7 @@ the printer. Measure your sheet and cut one test joint first: real 1/4 in sheets
 than 6.35 mm (use the web page above, or change `T` in `src/box_dims.py` and rebuild).
 
 **Ordering from SendCutSend instead:** upload the nine files in `DXF/box_sendcutsend/` (one of each),
-material Baltic Birch Plywood, .250 in. They're built for that sheet's 6.35 mm and have no engraving
-(SendCutSend doesn't engrave wood, and would cut the engraving lines through). Remake them with
+material Baltic Birch Plywood, .250 in. They're built for that sheet's 6.35 mm. Remake them with
 `.venv/bin/python src/box_sendcutsend.py`. Quoted 2026-10-05 at $268.59 for one box (free shipping); 1/4 in
 MDF came out slightly dearer than the plywood, and 1/8 in hardboard is about half price but too thin for this design.
 

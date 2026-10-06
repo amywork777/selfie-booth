@@ -4,7 +4,6 @@
 // front, back, ipad_holder and lock_bar in (x, z); left and right in (z, y); top, bottom and deck in (x, y).
 
 import pc from "./vendor/polygon-clipping.js";
-import engraving from "./engraving.js";
 
 const W = 393, H = 270, D = 265, FINGER = 30, TAB = 30, SLOT_FIT = 0.25;
 const PRINTER_W = 195, PRINTER_D = 75, PRINTER_H = 85;
@@ -12,7 +11,7 @@ const MBP_W = 312.6, MBP_D = 221.2, MBP_H = 15.5;
 const LABELS_W = 106, LABELS_D = 154, LABELS_H = 70;
 const IPAD_W = 134.8, IPAD_H = 195.4, IPAD_T = 6.3, IPAD_CORNER_R = 19;
 const CABLE_NOTCH_W = 24, CABLE_NOTCH_D = 12, WINDOW_LIP = 2.5, HOLDER_FIT = 0.4;
-const SLOT_W = 130, SIGN_CZ = 195, BAR_H = 16, BAR_FIT = 0.3;
+const SLOT_W = 130, BAR_H = 16, BAR_FIT = 0.3;
 const HOLDER_W = 110, HOLDER_H = 140, BAR_KNOB = 34;
 
 export const SIZE = { W, H, D };
@@ -154,13 +153,6 @@ export function pieces(T) {
   return out;
 }
 
-export function frontEngraving(T) {
-  // The three engraving groups from the Python model, each moved with its anchor.
-  const d = dims(T);
-  const anchors = [[d.IPAD_CX, d.IPAD_CZ], [d.PRINTER_CX, SIGN_CZ], [d.PRINTER_CX, (d.SLOT_Z0 + d.SLOT_Z1) / 2]];
-  return engraving.flatMap((faces, g) => faces.map(face => face.map(ring => ring.map(([x, y]) => [x + anchors[g][0], y + anchors[g][1]]))));
-}
-
 export function standins(T) {
   const d = dims(T);
   return {
@@ -194,10 +186,10 @@ function bounds(multi) {
 }
 
 export function layout(T) {
-  // Each sheet as {cut: [rings], engrave: [faces]} in sheet coordinates, mm, y down, outside face up.
-  const all = pieces(T), engrave = frontEngraving(T);
+  // Each sheet as {cut: [rings]} in sheet coordinates, mm, y down, outside face up.
+  const all = pieces(T);
   return SHEETS.map(([title, what, names]) => {
-    const cut = [], eng = [];
+    const cut = [];
     let x = MARGIN, y = MARGIN, rowH = 0;
     for (const name of names) {
       const multi = all[name].shape, b = bounds(multi), w = b.u1 - b.u0, h = b.v1 - b.v0;
@@ -205,10 +197,9 @@ export function layout(T) {
       if (x + w > SHEET_W - MARGIN || y + h > SHEET_H - MARGIN) throw new Error(`${name} doesn't fit on ${title}`);
       const place = ([u, v]) => [x + u - b.u0, y + b.v1 - v];
       for (const poly of multi) for (const ring of poly) cut.push(ring.map(place));
-      if (name === "front") for (const face of engrave) eng.push(face.map(ring => ring.map(place)));
       x += w + GAP; rowH = Math.max(rowH, h);
     }
-    return { title, what, cut, engrave: eng };
+    return { title, what, cut };
   });
 }
 
@@ -216,30 +207,27 @@ const f2 = n => +n.toFixed(3);
 const pathD = rings => rings.map(r => "M" + r.map(([x, y]) => `${f2(x)},${f2(y)}`).join("L") + "Z").join("");
 
 export function sheetSVG(sheet) {
-  // Glowforge reads colour: red lines cut (every hole is one), black filled shapes engrave.
+  // Red lines only: the Glowforge cuts them all, every hole included. No engraving.
   return `<?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${SHEET_W}mm" height="${SHEET_H}mm" viewBox="0 0 ${SHEET_W} ${SHEET_H}">
-  <g id="engrave" fill="#000000" fill-rule="evenodd" stroke="none">${sheet.engrave.map(f => `<path d="${pathD(f)}"/>`).join("")}</g>
   <g id="cut" fill="none" stroke="#ff0000" stroke-width="0.1">${sheet.cut.map(r => `<path d="${pathD([r])}"/>`).join("")}</g>
 </svg>
 `;
 }
 
 export function sheetDXF(sheet) {
-  // Plain R12 DXF in mm: one closed polyline per outline, layers CUT and ENGRAVE, y flipped back up.
+  // Plain R12 DXF in mm: one closed polyline per outline on layer CUT, y flipped back up.
   const out = ["0", "SECTION", "2", "HEADER", "9", "$ACADVER", "1", "AC1009", "9", "$INSUNITS", "70", "4", "0", "ENDSEC",
-    "0", "SECTION", "2", "TABLES", "0", "TABLE", "2", "LAYER", "70", "2",
+    "0", "SECTION", "2", "TABLES", "0", "TABLE", "2", "LAYER", "70", "1",
     "0", "LAYER", "2", "CUT", "70", "0", "62", "1", "6", "CONTINUOUS",
-    "0", "LAYER", "2", "ENGRAVE", "70", "0", "62", "7", "6", "CONTINUOUS", "0", "ENDTAB", "0", "ENDSEC",
+    "0", "ENDTAB", "0", "ENDSEC",
     "0", "SECTION", "2", "ENTITIES"];
-  const poly = (ring, layer) => {
-    out.push("0", "POLYLINE", "8", layer, "66", "1", "70", "1");
+  for (const ring of sheet.cut) {
+    out.push("0", "POLYLINE", "8", "CUT", "66", "1", "70", "1");
     const pts = ring.length > 1 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? ring.slice(0, -1) : ring;
-    for (const [x, y] of pts) out.push("0", "VERTEX", "8", layer, "10", String(f2(x)), "20", String(f2(SHEET_H - y)));
-    out.push("0", "SEQEND", "8", layer);
-  };
-  for (const r of sheet.cut) poly(r, "CUT");
-  for (const f of sheet.engrave) for (const r of f) poly(r, "ENGRAVE");
+    for (const [x, y] of pts) out.push("0", "VERTEX", "8", "CUT", "10", String(f2(x)), "20", String(f2(SHEET_H - y)));
+    out.push("0", "SEQEND", "8", "CUT");
+  }
   out.push("0", "ENDSEC", "0", "EOF");
   return out.join("\n") + "\n";
 }

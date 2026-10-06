@@ -1,8 +1,7 @@
 """Upload files for ordering the box from SendCutSend (1/4 in birch plywood, PLYWOODBIRCH-250).
 
-Their sheet is 6.35 mm nominal, so the pieces are rebuilt at that thickness, and the engraving is
-left out: SendCutSend cuts every line it's given and doesn't engrave wood. One DXF per piece in
-DXF/box_sendcutsend/; order one of each. Run from hardware/; the 6 mm files are rebuilt after.
+Their sheet is 6.35 mm nominal, so the pieces are rebuilt at that thickness. The files are cut lines
+only, which is all SendCutSend takes for wood. One DXF per piece in DXF/box_sendcutsend/; order one of each. Run from hardware/; the 6 mm files are rebuilt after.
 """
 
 from __future__ import annotations

@@ -4,13 +4,13 @@
 //     node checks/box_web_check.mjs 5.5 6.35 7
 //
 // For every piece, the area covered by one outline but not the other, spread along its edges, must be under
-// 0.01 mm on average (arcs and letters are drawn as short straight lines on both sides, so it's never zero).
+// 0.01 mm on average (arcs are drawn as short straight lines on both sides, so it's never zero).
 
 import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import pc from "../../docs/box/vendor/polygon-clipping.js";
-import { pieces, frontEngraving, layout, sheetSVG, sheetDXF } from "../../docs/box/box.js";
+import { pieces, layout, sheetSVG, sheetDXF } from "../../docs/box/box.js";
 
 const toMulti = faces => faces.map(rings => rings.map(r => [...r, r[0]]));
 const perimeter = multi => multi.flat().reduce((s, r) => s + r.slice(1).reduce((t, p, i) => t + Math.hypot(p[0] - r[i][0], p[1] - r[i][1]), 0), 0);
@@ -31,8 +31,7 @@ for (const t of process.argv.slice(2)) {
   const ref = JSON.parse(readFileSync(join(process.env.TMPDIR || tmpdir(), `box_ref_${key}.json`), "utf8"));
   const js = pieces(n);
   for (const [name, faces] of Object.entries(ref)) {
-    const theirs = name === "front_engraving" ? frontEngraving(n).map(f => f.map(r => [...r, r[0]])) : null;
-    const a = toMulti(faces), b = theirs ?? js[name].shape;
+    const a = toMulti(faces), b = js[name].shape;
     const off = area(pc.xor(a, b)) / perimeter(a);
     check(`${t} mm ${name}`, off < 0.01, `edges ${off.toFixed(4)} mm apart on average`);
   }
