@@ -76,7 +76,7 @@ def sheet_layers(sheet):
 
 
 def write_svg(sheet):
-    """Glowforge-ready SVG: red cut lines, black filled engraving, at real size."""
+    """Glowforge-ready SVG: red cut lines (every hole is one), black filled engraving, at real size."""
     cuts, engraves = layout(sheet)
     svg = bd.ExportSVG(unit=bd.Unit.MM, margin=0)
     svg.add_layer("engrave", fill_color=(0, 0, 0), line_color=None)
@@ -86,7 +86,12 @@ def write_svg(sheet):
     for c in cuts:
         svg.add_shape([edge for face in c.faces() for edge in face.edges()], layer="cut")
     OUT.mkdir(parents=True, exist_ok=True)
-    svg.write(str(OUT / f"{sheet}.svg"))
+    path = OUT / f"{sheet}.svg"
+    svg.write(str(path))
+    # Engraving shapes with holes in them (the frame band round the iPad window, letters like "o") must
+    # fill evenodd, or the Glowforge fills the hole too and engraves the whole window before cutting it.
+    text = path.read_text().replace('id="engrave"', 'id="engrave" fill-rule="evenodd"', 1)
+    path.write_text(text)
 
 
 @dxf(out="../DXF/box_sheets/sheet1_front.dxf")

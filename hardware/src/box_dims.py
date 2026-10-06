@@ -10,9 +10,9 @@ World frame: X across the front (left to right as you face it), Y from the front
 back, Z up from the table.
 """
 
-# Plywood thickness: 6 mm for the Glowforge. Measure yours: real plywood varies. (box_sendcutsend.py
-# rebuilds at 6.35 mm, SendCutSend's 1/4 in birch, by rewriting this line while it runs.)
-T = 6.0
+# Sheet thickness: 1/4 in MDF. Measure yours: real sheets vary. The web generator (docs/box.html) redraws
+# the cut files live for any thickness; box_sendcutsend.py rebuilds here by rewriting this line.
+T = 6.35
 SLOT_FIT = 0.25  # each side, so a tab still goes through a slot when the sheet comes out a bit thick
 
 # Outer box.

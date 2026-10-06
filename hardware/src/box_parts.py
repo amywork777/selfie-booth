@@ -1,4 +1,4 @@
-"""Cut files for the convention box: nine pieces of 6 mm plywood, one DXF each, laid flat with the
+"""Cut files for the convention box: nine pieces of 1/4 in MDF or plywood, one DXF each, laid flat with the
 outside face up so the engraving lands on the outside and reads the right way round.
 CUT layer cuts, ENGRAVE layer engraves.
 
@@ -44,29 +44,35 @@ def lay_flat(shape: bd.Shape, frontal: bool) -> bd.Shape:
     return flatten.union_faces([bd.Location((0, 0, -top)) * f for f in faces])
 
 
-def front_engraving() -> bd.Sketch:
-    """Engraved instead of glued on: a frame band round the iPad, the round sign, a line round the slot."""
+def engraving_groups() -> list[tuple[tuple[float, float], bd.Sketch]]:
+    """The front's engraving in three groups, each with the point it moves with when the sheet thickness
+    changes (the web generator, docs/box.html, shifts each group by how far its anchor moves)."""
     r = IPAD_CORNER_R - 2.5
-    with bd.BuildSketch() as s:
-        # Frame band round the iPad window (filled).
+    with bd.BuildSketch() as band:  # frame band round the iPad window, and the title above it
         with bd.Locations((IPAD_CX, IPAD_CZ)):
             bd.RectangleRounded(WINDOW_W + 2 * FRAME_BAND, WINDOW_H + 2 * FRAME_BAND, r + FRAME_BAND)
             bd.RectangleRounded(WINDOW_W + 2, WINDOW_H + 2, r + 1, mode=bd.Mode.SUBTRACT)
-        # Round sign: a ring.
+    with bd.BuildSketch() as ring:  # round sign
         with bd.Locations((PRINTER_CX, SIGN_CZ)):
             bd.Circle(SIGN_D / 2)
             bd.Circle(SIGN_D / 2 - 3, mode=bd.Mode.SUBTRACT)
-        # A line round the print slot.
-        with bd.Locations((PRINTER_CX, (SLOT_Z0 + SLOT_Z1) / 2)):
+    slot_cz = (SLOT_Z0 + SLOT_Z1) / 2
+    with bd.BuildSketch() as slot:  # a line round the print slot
+        with bd.Locations((PRINTER_CX, slot_cz)):
             bd.RectangleRounded(SLOT_W + 16, SLOT_Z1 - SLOT_Z0 + 16, 18)
             bd.RectangleRounded(SLOT_W + 10, SLOT_Z1 - SLOT_Z0 + 10, 15, mode=bd.Mode.SUBTRACT)
-    words = (
-        text("selfie booth", IPAD_CX, IPAD_CZ + WINDOW_H / 2 + FRAME_BAND + 11, 13)
-        + text("tap the screen", PRINTER_CX, SIGN_CZ + 14, 16)
-        + text("and smile", PRINTER_CX, SIGN_CZ - 8, 16)
-        + heart(PRINTER_CX, SIGN_CZ - 32, 13)
-    )
-    return s.sketch + words
+    return [
+        ((IPAD_CX, IPAD_CZ), band.sketch + text("selfie booth", IPAD_CX, IPAD_CZ + WINDOW_H / 2 + FRAME_BAND + 11, 13)),
+        ((PRINTER_CX, SIGN_CZ), ring.sketch + text("tap the screen", PRINTER_CX, SIGN_CZ + 14, 16)
+         + text("and smile", PRINTER_CX, SIGN_CZ - 8, 16) + heart(PRINTER_CX, SIGN_CZ - 32, 13)),
+        ((PRINTER_CX, slot_cz), slot.sketch),
+    ]
+
+
+def front_engraving() -> bd.Sketch:
+    """Engraved instead of glued on: a frame band round the iPad, the round sign, a line round the slot."""
+    groups = [sketch for _, sketch in engraving_groups()]
+    return groups[0] + groups[1] + groups[2]
 
 
 def frontal(name, engrave=None):

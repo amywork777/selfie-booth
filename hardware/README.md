@@ -8,7 +8,7 @@ Two designs:
 
 ## Laser-cut box
 
-Nine pieces of 6 mm (1/4 in) plywood, **no screws or hardware**: just wood glue for the box itself.
+Nine pieces of 1/4 in (6.35 mm) MDF or plywood, **no screws or hardware**: just wood glue for the box itself.
 393 x 270 x 265 mm, finger-jointed, and every piece cuts on a Glowforge in one go.
 
 Inside: a 14 in MacBook Pro lies closed in a bay across the bottom. A deck over it carries the iPad
@@ -51,10 +51,16 @@ USB-C to USB-A adapter for the printer cable; an HDMI dummy plug for the MacBook
 plug** (about $8, "4K HDMI headless display emulator") into its HDMI port and keep the charger in.
 Do the one-time "Start Automatically" setup from START HERE with the lid open, then close it.
 
+**For any thickness of wood:** https://amywork777.github.io/selfie-booth/box.html redraws the cut files
+live for the thickness you type, shows the sheets, downloads them as a ZIP (Glowforge SVGs and DXFs) and shows
+the box in 3D. It rebuilds the pieces in JavaScript (`docs/box/box.js`), a port of `src/box.py`; the front's
+engraving comes from `src/box_web.py engraving`. After changing the box, rerun that and check the port still
+matches: `.venv/bin/python src/box_web.py reference 5.5 6.35 7 && node checks/box_web_check.mjs 5.5 6.35 7`.
+
 **Before cutting:** measure the printer (published size: 195 x 75 x 85 mm). The print slot is 130 x
 60 mm and covers the whole upper part of the printer's front, so the label gets out wherever it leaves
-the printer. Measure your plywood and cut one test joint first: real 1/4 in plywood is often thinner
-than 6 mm (change `T` in `src/box_dims.py` and rebuild).
+the printer. Measure your sheet and cut one test joint first: real 1/4 in sheets are often a little thinner
+than 6.35 mm (use the web page above, or change `T` in `src/box_dims.py` and rebuild).
 
 **Ordering from SendCutSend instead:** upload the nine files in `DXF/box_sendcutsend/` (one of each),
 material Baltic Birch Plywood, .250 in. They're built for that sheet's 6.35 mm and have no engraving
