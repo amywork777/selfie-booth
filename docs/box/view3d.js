@@ -4,7 +4,7 @@
 // way and lights up what it's about.
 
 import * as THREE from "./vendor/three.js";
-import { pieces, standins, dims, SIZE } from "./box.js";
+import { pieces, standins, dims, SIZE } from "./box.js?v=2"; // same ?v= as box.html
 
 const { W, H, D } = SIZE;
 const WOOD = {

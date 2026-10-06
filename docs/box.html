@@ -103,7 +103,8 @@
   </section>
 </main>
 <script type="module">
-  import { layout, sheetSVG, sheetDXF, SHEET_W, SHEET_H } from "./box/box.js";
+  // ?v= makes browsers fetch new copies after a change; bump it (here and in box/view3d.js) on every edit.
+  import { layout, sheetSVG, sheetDXF } from "./box/box.js?v=2";
   import { zipSync, strToU8 } from "./box/vendor/fflate.js";
 
   const input = document.getElementById("t"), slider = document.getElementById("slider");
@@ -182,7 +183,7 @@ Different wood? Make new files: https://amywork777.github.io/selfie-booth/box.ht
   document.getElementById("show3d").onclick = async e => {
     if (viewer) return;
     e.target.textContent = "Loading...";
-    const { makeViewer } = await import("./box/view3d.js");
+    const { makeViewer } = await import("./box/view3d.js?v=2");
     document.getElementById("tour").hidden = false;
     e.target.hidden = true;
     const back = document.getElementById("back"), next = document.getElementById("next");
