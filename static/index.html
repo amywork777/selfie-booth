@@ -41,6 +41,13 @@
           <input id="event-caption" type="text" maxlength="28" placeholder="Event caption, like amy's 30th" autocomplete="off" enterkeyhint="done" aria-label="Event caption">
         </div>
         <div class="field">
+          <span class="label" id="copies-label">Copies</span>
+          <div class="choices" role="radiogroup" aria-labelledby="copies-label">
+            <button type="button" class="choice" role="radio" id="copies-one">1 per guest</button>
+            <button type="button" class="choice" role="radio" id="copies-two">Guests can print 2</button>
+          </div>
+        </div>
+        <div class="field">
           <span class="label" id="paper-label">Paper loaded in the printer</span>
           <div class="choices" id="papers" role="radiogroup" aria-labelledby="paper-label"></div>
         </div>
@@ -82,6 +89,7 @@
         <button type="button" class="btn primary" id="to-photo">Next</button>
         <button type="button" class="btn primary" id="shoot">Take photo</button>
         <button type="button" class="btn" id="retake">Retake</button>
+        <button type="button" class="btn" id="copies" aria-pressed="false">2 copies</button>
         <button type="button" class="btn primary" id="print">Print</button>
       </div>
     </section>

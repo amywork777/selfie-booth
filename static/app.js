@@ -27,6 +27,9 @@ const settings = {
   sound: localStorage.getItem('booth:sound') !== 'false',
   // Code to start: guests get it when they pay; it also guards Settings.
   lock: localStorage.getItem('booth:lock') !== 'false',
+  // Copies: the host allows 1 or up to 2 per guest; `copies` is what this guest picked.
+  maxCopies: localStorage.getItem('booth:maxCopies') === '1' ? 1 : 2,
+  copies: 1,
   code: /^\d{4}$/.test(localStorage.getItem('booth:code') ?? '') ? localStorage.getItem('booth:code') : '0000',
 }
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -193,7 +196,7 @@ function autoPrint() {
       clearInterval(autoTimer)
       return print()
     }
-    $('print').textContent = `Printing in ${left}`
+    $('print').textContent = `Printing${settings.copies > 1 ? ' 2' : ''} in ${left}`
     left--
   }
   tick()
@@ -211,6 +214,7 @@ function backToLive() {
 
 /** Back to step 1, ready for the next guest: a blank caption, or the event's. */
 function backToStart() {
+  setCopies(1)
   backToLive()
   resetCaption()
   startSession()
@@ -361,17 +365,18 @@ async function print() {
   clearTimeout(reviewTimer)
   clearInterval(autoTimer)
   setState('printing')
-  $('print').textContent = 'Printing'
-  $('print').disabled = $('retake').disabled = true
+  const copies = Math.min(settings.copies, settings.maxCopies)
+  $('print').textContent = copies > 1 ? 'Printing 2' : 'Printing'
+  $('print').disabled = $('retake').disabled = $('copies').disabled = true
   try {
     const png = await new Promise((r) => canvas.toBlob(r, 'image/png'))
-    const res = await fetch(`/print?paper=${settings.paper}`, { method: 'POST', body: png })
+    const res = await fetch(`/print?paper=${settings.paper}&copies=${copies}`, { method: 'POST', body: png })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(body.error ?? 'print failed')
     tone(660, 90); setTimeout(() => tone(990, 140), 110)
     setState('done')
-    message('Grab your print!')
-    setTimeout(backToStart, 4000)
+    message(copies > 1 ? 'Grab your prints!' : 'Grab your print!')
+    setTimeout(backToStart, copies > 1 ? 7000 : 4000) // the second copy takes a few more seconds
   } catch (err) {
     log(`print failed: ${err.message}`)
     message(`${err.message}. Tap Print to try again.`)
@@ -379,7 +384,7 @@ async function print() {
     reviewTimer = setTimeout(backToStart, REVIEW_TIMEOUT)
   } finally {
     $('print').textContent = 'Print'
-    $('print').disabled = $('retake').disabled = false
+    $('print').disabled = $('retake').disabled = $('copies').disabled = false
   }
 }
 
@@ -556,6 +561,32 @@ $('lock-code').oninput = (e) => {
 }
 syncLock()
 $('print').onclick = print
+
+// ---- Copies: up to 2 per guest, if the host allows it ------------------------------------------------
+
+function setCopies(n) {
+  settings.copies = n
+  $('copies').setAttribute('aria-pressed', String(n > 1))
+}
+$('copies').onclick = () => {
+  setCopies(settings.copies > 1 ? 1 : 2)
+  tone(1200, 30)
+  if (state === 'review') autoPrint() // restart the countdown so the choice doesn't race it
+}
+function syncMaxCopies() {
+  document.body.dataset.copies = settings.maxCopies > 1 ? 'two' : 'one'
+  $('copies-one').setAttribute('aria-checked', String(settings.maxCopies === 1))
+  $('copies-two').setAttribute('aria-checked', String(settings.maxCopies > 1))
+}
+function setMaxCopies(n) {
+  settings.maxCopies = n
+  localStorage.setItem('booth:maxCopies', n)
+  setCopies(1)
+  syncMaxCopies()
+}
+$('copies-one').onclick = () => setMaxCopies(1)
+$('copies-two').onclick = () => setMaxCopies(2)
+syncMaxCopies()
 
 // ---- Printer status ----------------------------------------------------------------------------
 

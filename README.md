@@ -72,6 +72,8 @@ Guests go through:
 
 - **Captions:** *Guests write their own*, or *Same for everyone* with one event caption. With the same
   caption for everyone, guests skip step 3 (except on Plain, where it becomes "Doodle on it").
+- **Copies:** *1 per guest*, or *Guests can print 2*. With 2 allowed, the review screen has a
+  **2 copies** button next to Print (tapping it restarts the print countdown). The server caps it at 2.
 - **Date** on or off, **Sound** on or off.
 
 To see every pattern and photo count at once: https://selfie-booth.local:8443/frames.html

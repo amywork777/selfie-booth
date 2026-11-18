@@ -28,6 +28,7 @@ HTTP_PORT, HTTPS_PORT = 8000, 8443
 ROOT = Path(__file__).parent
 STATIC = ROOT / "static"
 MAX_UPLOAD = 20 * 1024 * 1024
+MAX_COPIES = 2  # a guest can print their label at most this many times
 CERTS = ROOT / "certs"
 CA_CERT, CA_KEY = CERTS / "booth-ca.crt", CERTS / "booth-ca.key"
 BOOTH_NAME = "selfie-booth.local"  # announced on the network, so the address never changes
@@ -139,14 +140,17 @@ class Booth(BaseHTTPRequestHandler):
         path, _, query = self.path.partition("?")
         if path != "/print":
             return self.reply(404)
-        paper = dict(p.split("=", 1) for p in query.split("&") if "=" in p).get("paper", "4x6")
+        params = dict(p.split("=", 1) for p in query.split("&") if "=" in p)
+        paper = params.get("paper", "4x6")
+        copies = int(params["copies"]) if params.get("copies", "").isdigit() else 1
+        copies = max(1, min(copies, MAX_COPIES))
         size = int(self.headers.get("Content-Length", 0))
         if not 0 < size <= MAX_UPLOAD:
             return self.reply(413, b'{"error":"photo too large"}')
         try:
             img = Image.open(io.BytesIO(self.rfile.read(size)))
             # The page sends a finished, already dithered label: print it dot for dot.
-            printer.send(label(img, dither=False, paper=paper))
+            printer.send(label(img, dither=False, paper=paper, copies=copies))
             self.reply(200, b'{"ok":true}')
         except PrinterNotFound as e:
             self.reply(503, json.dumps({"error": str(e)}).encode())

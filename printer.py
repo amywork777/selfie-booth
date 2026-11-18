@@ -86,8 +86,8 @@ class Printer:
                         raise
 
 
-def label(img: Image.Image, dither=True, paper="4x6") -> bytes:
-    """Fit an image to the paper and wrap it in TSPL.
+def label(img: Image.Image, dither=True, paper="4x6", copies=1) -> bytes:
+    """Fit an image to the paper and wrap it in TSPL, printed `copies` times.
 
     dither=False for images that are already black and white (the iPad dithers
     its own preview, so the print matches the screen dot for dot).
@@ -103,4 +103,4 @@ def label(img: Image.Image, dither=True, paper="4x6") -> bytes:
     if INVERT:
         bits = bytes(b ^ 0xFF for b in bits)
     head = f"SIZE {w_in},{h_in}\r\nGAP {GAP if gaps else '0,0'}\r\nDIRECTION 1\r\nCLS\r\nBITMAP 0,0,{W // 8},{H},0,"
-    return head.encode() + bits + b"\r\nPRINT 1\r\n"
+    return head.encode() + bits + f"\r\nPRINT 1,{copies}\r\n".encode()
